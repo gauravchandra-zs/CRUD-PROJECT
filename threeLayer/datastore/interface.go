@@ -8,6 +8,7 @@ import (
 
 type Book interface {
 	GetAllBooks(ctx context.Context, title string) ([]models.Book, error)
+	GetAllBooksByTitle(ctx context.Context, title string) ([]models.Book, error)
 	GetBookByID(ctx context.Context, id int) (models.Book, error)
 	PostBook(ctx context.Context, book *models.Book) (int, error)
 	DeleteBook(ctx context.Context, id int) (int, error)

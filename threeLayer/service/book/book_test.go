@@ -11,6 +11,16 @@ import (
 
 type mockBookstore struct{}
 
+func (m mockBookstore) CheckBook(ctx context.Context, book *models.Book) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockBookstore) CheckBookBid(ctx context.Context, id int) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (m mockBookstore) GetAllBooks(ctx context.Context, title string) ([]models.Book, error) {
 	if title == "" {
 		return []models.Book{
@@ -113,6 +123,15 @@ func (m mockBookstore) DeleteBookByAuthorID(id int) error {
 }
 
 type mockAuthorStore struct{}
+
+func (m mockAuthorStore) CheckAuthorByID(ctx context.Context, id int) bool {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m mockAuthorStore) CheckAuthor(ctx context.Context, author models.Author) bool {
+
+}
 
 func (m mockAuthorStore) PostAuthor(author models.Author) (int, error) {
 	if author.FirstName == "gaurav" && author.LastName == "chaudhari" {

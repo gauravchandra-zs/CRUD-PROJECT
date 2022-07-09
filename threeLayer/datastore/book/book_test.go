@@ -31,6 +31,7 @@ func TestGetAllBooks(t *testing.T) {
 		expectedOutput []models.Book
 		rows           *sqlmock.Rows
 		title          string
+		err            error
 	}{
 		{
 			"valid case", []models.Book{
@@ -43,21 +44,26 @@ func TestGetAllBooks(t *testing.T) {
 					PublicationDate: "12-08-2011",
 				},
 			}, sqlmock.NewRows([]string{"bookID", "title", "publication", "publicationDate",
-				"authorID"}).AddRow(1, "RD sharma", "Arihanth", "12-08-2011", 1), "",
+				"authorID"}).AddRow(1, "RD sharma", "Arihanth", "12-08-2011", 1), "", nil,
 		},
 		{
 			"inValid case", []models.Book{},
 			sqlmock.NewRows([]string{"bookID", "title", "publication", "publicationDate",
-				"authorID"}).AddRow("id", "RD sharma", "Arihanth", "12-08-2011", 1), "",
+				"authorID"}).AddRow("id", "RD sharma", "Arihanth", "12-08-2011", 1), "", nil,
+		},
+		{
+			"inValid case", []models.Book{},
+			sqlmock.NewRows([]string{"bookID", "title", "publication", "publicationDate",
+				"authorID"}).AddRow(1, "RD sharma", "Arihanth", "12-08-2011", 1), "", errors.New("err"),
 		},
 	}
 	for i, v := range testcases {
 		db, mock := NewMock()
 		a := New(db)
 
-		mock.ExpectQuery(drivers.SelectFromBook).WillReturnRows(v.rows).WillReturnError(nil)
+		mock.ExpectQuery(drivers.SelectFromBook).WillReturnRows(v.rows).WillReturnError(v.err)
 		ctx := context.Background()
-		output, _ := a.GetAllBooks(ctx, v.title)
+		output, _ := a.GetAllBooks(ctx)
 
 		if !reflect.DeepEqual(output, v.expectedOutput) {
 			fmt.Println(i)
@@ -92,17 +98,21 @@ func TestGetAllWithTitle(t *testing.T) {
 			sqlmock.NewRows([]string{"bookID", "title", "publication", "publicationDate",
 				"authorID"}).AddRow(1, "RD sharma", "Arihanth", "12-08-2011", 1), "RD sharma", errors.New("err"),
 		},
+		{
+			"inValid case", []models.Book{},
+			sqlmock.NewRows([]string{"bookID", "title", "publication", "publicationDate",
+				"authorID"}).AddRow("id", "RD sharma", "Arihanth", "12-08-2011", 1), "RD sharma", nil,
+		},
 	}
-	for i, v := range testcases {
+	for _, v := range testcases {
 		db, mock := NewMock()
 		a := New(db)
 
 		mock.ExpectQuery(drivers.SelectFromBookByTitle).WithArgs(v.title).WillReturnRows(v.rows).WillReturnError(v.err)
 		ctx := context.Background()
-		output, _ := a.GetAllBooks(ctx, v.title)
+		output, _ := a.GetAllBooksByTitle(ctx, v.title)
 
 		if !reflect.DeepEqual(output, v.expectedOutput) {
-			fmt.Println(i)
 			t.Errorf("Expected %v\tGot %v", v.expectedOutput, output)
 		}
 	}

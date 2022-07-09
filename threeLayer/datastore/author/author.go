@@ -8,7 +8,6 @@ import (
 	"Projects/GoLang-Interns-2022/threeLayer/models"
 )
 
-// AuthorStore is a struct
 type AuthorStore struct {
 	db *sql.DB
 }

@@ -17,19 +17,31 @@ func New(db *sql.DB) BookStore {
 	return BookStore{db: db}
 }
 
-func (b BookStore) GetAllBooks(ctx context.Context, title string) ([]models.Book, error) {
+func (b BookStore) GetAllBooksByTitle(ctx context.Context, title string) ([]models.Book, error) {
 	var output []models.Book
 
-	var result *sql.Rows
-
-	var err error
-
-	if title == "" {
-		result, err = b.db.QueryContext(ctx, drivers.SelectFromBook)
-	} else {
-		result, err = b.db.QueryContext(ctx, drivers.SelectFromBookByTitle, title)
+	result, err := b.db.QueryContext(ctx, drivers.SelectFromBookByTitle, title)
+	if err != nil {
+		return []models.Book{}, nil
 	}
 
+	for result.Next() {
+		var book models.Book
+
+		err = result.Scan(&book.ID, &book.Title, &book.Publication, &book.PublicationDate, &book.Author.ID)
+		if err != nil {
+			return []models.Book{}, err
+		}
+
+		output = append(output, book)
+	}
+
+	return output, nil
+}
+func (b BookStore) GetAllBooks(ctx context.Context) ([]models.Book, error) {
+	var output []models.Book
+
+	result, err := b.db.QueryContext(ctx, drivers.SelectFromBook)
 	if err != nil {
 		return []models.Book{}, nil
 	}
