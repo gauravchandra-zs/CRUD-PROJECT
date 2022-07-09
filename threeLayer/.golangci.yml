@@ -78,7 +78,7 @@ linters:
     - varcheck
     - whitespace
     - wsl
-
+  local-prefixes
 # golangci.com configuration
 # https://github.com/golangci/golangci/wiki/Configuration
 service:

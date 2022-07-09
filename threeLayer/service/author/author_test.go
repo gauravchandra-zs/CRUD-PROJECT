@@ -1,8 +1,8 @@
 package serviceauthor
 
 import (
+	"context"
 	"errors"
-	"log"
 	"reflect"
 	"testing"
 
@@ -12,7 +12,15 @@ import (
 type mockAuthorStore struct {
 }
 
-func (m mockAuthorStore) PostAuthor(author models.Author) (int, error) {
+func (m mockAuthorStore) CheckAuthorByID(ctx context.Context, id int) bool {
+	return true
+}
+
+func (m mockAuthorStore) CheckAuthor(ctx context.Context, author models.Author) bool {
+	return true
+}
+
+func (m mockAuthorStore) PostAuthor(ctx context.Context, author models.Author) (int, error) {
 	if author.FirstName == "gaurav" && author.LastName == "chandra" {
 		return 0, errors.New("author already exist")
 	}
@@ -20,7 +28,7 @@ func (m mockAuthorStore) PostAuthor(author models.Author) (int, error) {
 	return 1, nil
 }
 
-func (m mockAuthorStore) DeleteAuthor(id int) (int, error) {
+func (m mockAuthorStore) DeleteAuthor(ctx context.Context, id int) (int, error) {
 	if id <= 0 {
 		return 0, errors.New("invalid id")
 	}
@@ -32,7 +40,7 @@ func (m mockAuthorStore) DeleteAuthor(id int) (int, error) {
 	return 1, nil
 }
 
-func (m mockAuthorStore) PutAuthor(id int, author models.Author) (models.Author, error) {
+func (m mockAuthorStore) PutAuthor(ctx context.Context, id int, author models.Author) (models.Author, error) {
 	if id <= 0 || id >= 100 {
 		return models.Author{}, errors.New("invalid author id")
 	}
@@ -40,34 +48,42 @@ func (m mockAuthorStore) PutAuthor(id int, author models.Author) (models.Author,
 	return author, nil
 }
 
-func (m mockAuthorStore) GetAuthorByID(id int) (models.Author, error) {
+func (m mockAuthorStore) GetAuthorByID(ctx context.Context, id int) (models.Author, error) {
 	return models.Author{}, nil
 }
 
 type mockBookStore struct {
 }
 
-func (m mockBookStore) GetAllBooks(title string) ([]models.Book, error) {
+func (m mockBookStore) CheckBook(ctx context.Context, book *models.Book) bool {
+	return true
+}
+
+func (m mockBookStore) CheckBookBid(ctx context.Context, id int) bool {
+	return true
+}
+
+func (m mockBookStore) GetAllBooks(ctx context.Context, title string) ([]models.Book, error) {
 	return nil, nil
 }
 
-func (m mockBookStore) GetBookByID(id int) (models.Book, error) {
+func (m mockBookStore) GetBookByID(ctx context.Context, id int) (models.Book, error) {
 	return models.Book{}, nil
 }
 
-func (m mockBookStore) PostBook(book *models.Book) (int, error) {
+func (m mockBookStore) PostBook(ctx context.Context, book *models.Book) (int, error) {
 	return 0, nil
 }
 
-func (m mockBookStore) DeleteBook(id int) (int, error) {
+func (m mockBookStore) DeleteBook(ctx context.Context, id int) (int, error) {
 	return 0, nil
 }
 
-func (m mockBookStore) PutBook(book *models.Book) (models.Book, error) {
+func (m mockBookStore) PutBook(ctx context.Context, id int, book *models.Book) (models.Book, error) {
 	return models.Book{}, nil
 }
 
-func (m mockBookStore) DeleteBookByAuthorID(id int) error {
+func (m mockBookStore) DeleteBookByAuthorID(ctx context.Context, id int) error {
 	if id <= 0 {
 		return errors.New("invalid id")
 	}
@@ -112,11 +128,8 @@ func TestServiceAuthor_PostAuthor(t *testing.T) {
 	}
 	for _, v := range testcases {
 		a := New(mockAuthorStore{}, mockBookStore{})
-
-		id, err := a.PostAuthor(v.body)
-		if err != nil {
-			log.Print(err)
-		}
+		ctx := context.Background()
+		id, _ := a.PostAuthor(ctx, v.body)
 
 		if !reflect.DeepEqual(id, v.expectedID) {
 			t.Errorf("Expected %v\tGot %v", v.expectedID, id)
@@ -168,11 +181,8 @@ func TestServiceAuthor_PutAuthor(t *testing.T) {
 	}
 	for _, v := range testcases {
 		a := New(mockAuthorStore{}, mockBookStore{})
-
-		output, err := a.PutAuthor(v.id, v.body)
-		if err != nil {
-			log.Print(err)
-		}
+		ctx := context.Background()
+		output, _ := a.PutAuthor(ctx, v.id, v.body)
 
 		if !reflect.DeepEqual(v.expectedOutput, output) {
 			t.Errorf("Expected %v\tGot %v", v.expectedOutput, output)
@@ -193,19 +203,16 @@ func TestServiceAuthor_DeleteAuthor(t *testing.T) {
 			"invalid case", -1, 0,
 		},
 		{
-			"author exist but book not", 5, 0,
+			"valid case", 5, 0,
 		},
 		{
-			"valid author but not exist", 10, 0,
+			"valid case", 10, 0,
 		},
 	}
 	for _, v := range testcases {
 		a := New(mockAuthorStore{}, mockBookStore{})
-
-		id, err := a.DeleteAuthor(v.id)
-		if err != nil {
-			log.Print(err)
-		}
+		ctx := context.Background()
+		id, _ := a.DeleteAuthor(ctx, v.id)
 
 		if id != v.deletedID {
 			t.Errorf("test case fail")

@@ -2,6 +2,7 @@ package handlerauthor
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -19,7 +20,7 @@ import (
 type mockService struct {
 }
 
-func (m mockService) PostAuthor(author models.Author) (int, error) {
+func (m mockService) PostAuthor(ctx context.Context, author models.Author) (int, error) {
 	if !ValidateAuthor(author) {
 		return 0, errors.New("invalid author detail")
 	}
@@ -27,7 +28,7 @@ func (m mockService) PostAuthor(author models.Author) (int, error) {
 	return 1, nil
 }
 
-func (m mockService) DeleteAuthor(id int) (int, error) {
+func (m mockService) DeleteAuthor(ctx context.Context, id int) (int, error) {
 	if id <= 0 {
 		return 0, errors.New("invalid id")
 	}
@@ -37,7 +38,7 @@ func (m mockService) DeleteAuthor(id int) (int, error) {
 	return 1, nil
 }
 
-func (m mockService) PutAuthor(id int, author models.Author) (models.Author, error) {
+func (m mockService) PutAuthor(ctx context.Context, id int, author models.Author) (models.Author, error) {
 	if !ValidateAuthor(author) || id <= 0 {
 		return models.Author{}, errors.New("invalid author detail")
 	}

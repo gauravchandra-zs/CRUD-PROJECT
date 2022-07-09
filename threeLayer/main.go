@@ -7,19 +7,19 @@ import (
 
 	datastoreAuthor "Projects/GoLang-Interns-2022/threeLayer/datastore/author"
 	datastoreBook "Projects/GoLang-Interns-2022/threeLayer/datastore/book"
-	"Projects/GoLang-Interns-2022/threeLayer/driver"
+	"Projects/GoLang-Interns-2022/threeLayer/drivers"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/gorilla/mux"
+
 	handlerAuthor "Projects/GoLang-Interns-2022/threeLayer/handler/author"
 	handlerBook "Projects/GoLang-Interns-2022/threeLayer/handler/book"
 	serviceAuthor "Projects/GoLang-Interns-2022/threeLayer/service/author"
 	serviceBook "Projects/GoLang-Interns-2022/threeLayer/service/book"
-
-	_ "github.com/go-sql-driver/mysql"
-
-	"github.com/gorilla/mux"
 )
 
 func main() {
-	db, err := driver.CreateTable()
+	db, err := drivers.CreateTable()
 	if err != nil {
 		log.Print(err)
 		return

@@ -1,6 +1,7 @@
 package serviceauthor
 
 import (
+	"context"
 	"errors"
 
 	"Projects/GoLang-Interns-2022/threeLayer/datastore"
@@ -16,12 +17,12 @@ func New(author datastore.Author, book datastore.Book) ServiceAuthor {
 	return ServiceAuthor{author, book}
 }
 
-func (s ServiceAuthor) PostAuthor(author models.Author) (int, error) {
-	if !ValidateAuthor(author) {
-		return 0, errors.New("invalid author detail")
+func (s ServiceAuthor) PostAuthor(ctx context.Context, author models.Author) (int, error) {
+	if s.authorStore.CheckAuthor(ctx, author) {
+		return 0, errors.New("author exist")
 	}
 
-	insertedID, err := s.authorStore.PostAuthor(author)
+	insertedID, err := s.authorStore.PostAuthor(ctx, author)
 	if err != nil {
 		return 0, err
 	}
@@ -29,14 +30,12 @@ func (s ServiceAuthor) PostAuthor(author models.Author) (int, error) {
 	return insertedID, nil
 }
 
-func (s ServiceAuthor) PutAuthor(id int, author models.Author) (models.Author, error) {
-	var output models.Author
-
-	if !ValidateAuthor(author) {
-		return output, errors.New("invalid author detail")
+func (s ServiceAuthor) PutAuthor(ctx context.Context, id int, author models.Author) (models.Author, error) {
+	if !s.authorStore.CheckAuthorByID(ctx, id) {
+		return models.Author{}, errors.New("author not exist")
 	}
 
-	output, err := s.authorStore.PutAuthor(id, author)
+	output, err := s.authorStore.PutAuthor(ctx, id, author)
 	if err != nil {
 		return output, err
 	}
@@ -44,24 +43,20 @@ func (s ServiceAuthor) PutAuthor(id int, author models.Author) (models.Author, e
 	return output, nil
 }
 
-func (s ServiceAuthor) DeleteAuthor(id int) (int, error) {
-	err := s.bookStore.DeleteBookByAuthorID(id)
+func (s ServiceAuthor) DeleteAuthor(ctx context.Context, id int) (int, error) {
+	if !s.authorStore.CheckAuthorByID(ctx, id) {
+		return 0, errors.New("author not exist")
+	}
+
+	err := s.bookStore.DeleteBookByAuthorID(ctx, id)
 	if err != nil {
 		return 0, err
 	}
 
-	id, err = s.authorStore.DeleteAuthor(id)
+	id, err = s.authorStore.DeleteAuthor(ctx, id)
 	if err != nil {
 		return 0, err
 	}
 
 	return id, nil
-}
-
-func ValidateAuthor(author models.Author) bool {
-	if author.FirstName == "" || author.LastName == "" || author.Dob == "" || author.PenName == "" {
-		return false
-	}
-
-	return true
 }

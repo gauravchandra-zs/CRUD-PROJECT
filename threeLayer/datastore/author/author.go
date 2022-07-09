@@ -1,61 +1,15 @@
 package datastoreauthor
 
 import (
+	"context"
 	"database/sql"
-	"errors"
 
-	"Projects/GoLang-Interns-2022/threeLayer/driver"
+	"Projects/GoLang-Interns-2022/threeLayer/drivers"
 	"Projects/GoLang-Interns-2022/threeLayer/models"
 )
 
 type AuthorStore struct {
 	db *sql.DB
-}
-
-func (a AuthorStore) PostAuthor(author models.Author) (int, error) {
-	if !checkAuthor(author, a.db) {
-		result, err := a.db.Exec(driver.InsertIntoAuthor, author.FirstName, author.LastName, author.Dob, author.PenName)
-		if err != nil {
-			return 0, err
-		}
-
-		id, err := result.LastInsertId()
-		if err != nil {
-			return 0, err
-		}
-
-		return int(id), nil
-	}
-
-	var id int
-
-	res, err := a.db.Query(driver.CheckAuthor, author.FirstName, author.LastName, author.Dob, author.PenName)
-	if err != nil {
-		return 0, err
-	}
-
-	if res.Next() {
-		err := res.Scan(&id)
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	return id, errors.New("author present already")
-}
-
-func (a AuthorStore) PutAuthor(id int, author models.Author) (models.Author, error) {
-	res, err := a.db.Query(driver.CheckAuthorBYID, id)
-	if !res.Next() || err != nil {
-		return models.Author{}, errors.New("author not present")
-	}
-
-	_, err = a.db.Exec(driver.UpdateAuthor, author.FirstName, author.LastName, author.Dob, author.PenName, id)
-	if err != nil {
-		return models.Author{}, err
-	}
-
-	return author, nil
 }
 
 func New(db *sql.DB) AuthorStore {
@@ -64,12 +18,32 @@ func New(db *sql.DB) AuthorStore {
 	}
 }
 
-func (a AuthorStore) DeleteAuthor(id int) (int, error) {
-	if !checkAuthorByID(id, a.db) {
-		return 0, errors.New("author not exist")
+func (a AuthorStore) PostAuthor(ctx context.Context, author models.Author) (int, error) {
+	result, err := a.db.ExecContext(ctx, drivers.InsertIntoAuthor, author.FirstName, author.LastName, author.Dob, author.PenName)
+	if err != nil {
+		return 0, err
 	}
 
-	res, err := a.db.Exec(driver.DeleteAuthorQuery, id)
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(id), nil
+
+}
+
+func (a AuthorStore) PutAuthor(ctx context.Context, id int, author models.Author) (models.Author, error) {
+	_, err := a.db.ExecContext(ctx, drivers.UpdateAuthor, author.FirstName, author.LastName, author.Dob, author.PenName, id)
+	if err != nil {
+		return models.Author{}, err
+	}
+
+	return author, nil
+}
+
+func (a AuthorStore) DeleteAuthor(ctx context.Context, id int) (int, error) {
+	res, err := a.db.ExecContext(ctx, drivers.DeleteAuthorQuery, id)
 	if err != nil {
 		return 0, err
 	}
@@ -82,16 +56,16 @@ func (a AuthorStore) DeleteAuthor(id int) (int, error) {
 	return int(deleteID), nil
 }
 
-func (a AuthorStore) GetAuthorByID(id int) (models.Author, error) {
-	ResAuthor, err := a.db.Query(driver.SelectAuthorByID, id)
+func (a AuthorStore) GetAuthorByID(ctx context.Context, id int) (models.Author, error) {
+	resAuthor, err := a.db.QueryContext(ctx, drivers.SelectAuthorByID, id)
 	if err != nil {
 		return models.Author{}, err
 	}
 
 	author := models.Author{}
 
-	if ResAuthor.Next() {
-		err = ResAuthor.Scan(&author.ID, &author.FirstName, &author.LastName, &author.Dob, &author.PenName)
+	if resAuthor.Next() {
+		err = resAuthor.Scan(&author.ID, &author.FirstName, &author.LastName, &author.Dob, &author.PenName)
 		if err != nil {
 			return models.Author{}, err
 		}
@@ -100,18 +74,18 @@ func (a AuthorStore) GetAuthorByID(id int) (models.Author, error) {
 	return author, nil
 }
 
-func checkAuthor(author models.Author, db *sql.DB) bool {
-	res, err := db.Query(driver.CheckAuthor, author.FirstName, author.LastName, author.Dob, author.PenName)
-	if !res.Next() || err != nil {
+func (a AuthorStore) CheckAuthor(ctx context.Context, author models.Author) bool {
+	row, err := a.db.QueryContext(ctx, drivers.CheckAuthor, author.FirstName, author.LastName, author.Dob, author.PenName)
+	if err != nil || !row.Next() {
 		return false
 	}
 
 	return true
 }
 
-func checkAuthorByID(id int, db *sql.DB) bool {
-	res, err := db.Query(driver.CheckAuthorBYID, id)
-	if !res.Next() || err != nil {
+func (a AuthorStore) CheckAuthorByID(ctx context.Context, id int) bool {
+	res, err := a.db.QueryContext(ctx, drivers.CheckAuthorBYID, id)
+	if err != nil || !res.Next() {
 		return false
 	}
 

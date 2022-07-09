@@ -1,10 +1,12 @@
 package handlerbook
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"Projects/GoLang-Interns-2022/threeLayer/models"
 	"Projects/GoLang-Interns-2022/threeLayer/service"
@@ -23,14 +25,11 @@ func New(b service.Book) HandlerBook {
 }
 
 func (h HandlerBook) GetAllBooks(w http.ResponseWriter, req *http.Request) {
-	params := map[string]string{
-		"title":         req.URL.Query().Get("title"),
-		"authorInclude": req.URL.Query().Get("includeAuthor"),
-	}
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "title", req.URL.Query().Get("title"))
+	ctx = context.WithValue(ctx, "includeAuthor", req.URL.Query().Get("includeAuthor"))
 
-	var output []models.Book
-
-	output, err := h.serviceBook.GetAllBooks(params)
+	output, err := h.serviceBook.GetAllBooks(ctx)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -44,6 +43,7 @@ func (h HandlerBook) GetAllBooks(w http.ResponseWriter, req *http.Request) {
 
 	_, err = w.Write(body)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
@@ -51,15 +51,17 @@ func (h HandlerBook) GetAllBooks(w http.ResponseWriter, req *http.Request) {
 func (h HandlerBook) GetBookById(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 
-	ID, err := strconv.Atoi(params["id"])
-	if err != nil {
+	id, err := strconv.Atoi(params["id"])
+	if err != nil || id <= 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	var output models.Book
 
-	output, err = h.serviceBook.GetBookByID(ID)
+	ctx := context.Background()
+
+	output, err = h.serviceBook.GetBookByID(ctx, id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -67,12 +69,13 @@ func (h HandlerBook) GetBookById(w http.ResponseWriter, req *http.Request) {
 
 	data, err := json.Marshal(output)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	_, err = w.Write(data)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
@@ -80,16 +83,27 @@ func (h HandlerBook) GetBookById(w http.ResponseWriter, req *http.Request) {
 func (h HandlerBook) PostBook(w http.ResponseWriter, req *http.Request) {
 	var book models.Book
 
-	body, _ := io.ReadAll(req.Body)
-
-	err := json.Unmarshal(body, &book)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	lastInsertedID, err := h.serviceBook.PostBook(&book)
-	if err != nil || lastInsertedID <= 0 {
+	err = json.Unmarshal(body, &book)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if !validateBook(&book) {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	ctx := context.Background()
+
+	_, err = h.serviceBook.PostBook(ctx, &book)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -98,17 +112,36 @@ func (h HandlerBook) PostBook(w http.ResponseWriter, req *http.Request) {
 }
 
 func (h HandlerBook) PutBook(w http.ResponseWriter, req *http.Request) {
+	params := mux.Vars(req)
+
+	id, err := strconv.Atoi(params["id"])
+	if err != nil || id <= 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	var book models.Book
 
-	body, _ := io.ReadAll(req.Body)
-
-	err := json.Unmarshal(body, &book)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	newData, err := h.serviceBook.PutBook(&book)
+	err = json.Unmarshal(body, &book)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if !validateBook(&book) || !validateAuthor(book.Author) {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	ctx := context.Background()
+
+	newData, err := h.serviceBook.PutBook(ctx, id, &book)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -120,27 +153,57 @@ func (h HandlerBook) PutBook(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusAccepted)
-
 	_, err = w.Write(body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (h HandlerBook) DeleteBook(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 
 	id, err := strconv.Atoi(params["id"])
+	if err != nil || id <= 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	ctx := context.Background()
+
+	_, err = h.serviceBook.DeleteBook(ctx, id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	deletedID, err := h.serviceBook.DeleteBook(id)
-	if err != nil || deletedID <= 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func validateBook(b *models.Book) bool {
+	slc := strings.Split(b.PublicationDate, "-")
+	sz := 3
+
+	switch {
+	case b.Publication != "Scholastic" && b.Publication != "Penguin" && b.Publication != "Arihanth":
+		return false
+	case len(slc) < sz:
+		return false
+	case slc[2] >= "2022" || slc[2] < "1880":
+		return false
+	case b.Title == "":
+		return false
+	default:
+		return true
 	}
+}
+
+func validateAuthor(author models.Author) bool {
+	if author.FirstName == "" || author.LastName == "" || author.Dob == "" || author.PenName == "" {
+		return false
+	}
+
+	return true
 }

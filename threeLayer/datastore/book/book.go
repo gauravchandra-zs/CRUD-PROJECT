@@ -1,10 +1,11 @@
 package datastorebook
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
-	"Projects/GoLang-Interns-2022/threeLayer/driver"
+	"Projects/GoLang-Interns-2022/threeLayer/drivers"
 	"Projects/GoLang-Interns-2022/threeLayer/models"
 )
 
@@ -16,7 +17,7 @@ func New(db *sql.DB) BookStore {
 	return BookStore{db: db}
 }
 
-func (b BookStore) GetAllBooks(title string) ([]models.Book, error) {
+func (b BookStore) GetAllBooks(ctx context.Context, title string) ([]models.Book, error) {
 	var output []models.Book
 
 	var result *sql.Rows
@@ -24,13 +25,13 @@ func (b BookStore) GetAllBooks(title string) ([]models.Book, error) {
 	var err error
 
 	if title == "" {
-		result, err = b.db.Query(driver.SelectFromBook)
+		result, err = b.db.QueryContext(ctx, drivers.SelectFromBook)
 	} else {
-		result, err = b.db.Query(driver.SelectFromBookByTitle, title)
+		result, err = b.db.QueryContext(ctx, drivers.SelectFromBookByTitle, title)
 	}
 
 	if err != nil {
-		return output, nil
+		return []models.Book{}, nil
 	}
 
 	for result.Next() {
@@ -38,7 +39,7 @@ func (b BookStore) GetAllBooks(title string) ([]models.Book, error) {
 
 		err = result.Scan(&book.ID, &book.Title, &book.Publication, &book.PublicationDate, &book.Author.ID)
 		if err != nil {
-			return output, err
+			return []models.Book{}, err
 		}
 
 		output = append(output, book)
@@ -47,10 +48,10 @@ func (b BookStore) GetAllBooks(title string) ([]models.Book, error) {
 	return output, nil
 }
 
-func (b BookStore) GetBookByID(id int) (models.Book, error) {
+func (b BookStore) GetBookByID(ctx context.Context, id int) (models.Book, error) {
 	var book models.Book
 
-	result, err := b.db.Query(driver.SelectFromBookByID, id)
+	result, err := b.db.QueryContext(ctx, drivers.SelectFromBookByID, id)
 	if err != nil {
 		return book, err
 	}
@@ -69,90 +70,66 @@ func (b BookStore) GetBookByID(id int) (models.Book, error) {
 	return book, errors.New("book not exists")
 }
 
-func (b BookStore) PostBook(book *models.Book) (int, error) {
-	result, err := b.db.Query(driver.CheckBook, book.Title, book.Publication, book.PublicationDate, book.Author.ID)
-	if err != nil || result.Next() {
-		return 0, err
-	}
-
-	rs, err := b.db.Exec(driver.InsertIntoBook, book.Title, book.Publication, book.PublicationDate, book.Author.ID)
+func (b BookStore) PostBook(ctx context.Context, book *models.Book) (int, error) {
+	rs, err := b.db.ExecContext(ctx, drivers.InsertIntoBook, book.Title, book.Publication, book.PublicationDate, book.Author.ID)
 	if err != nil {
 		return 0, err
 	}
 
 	id, err := rs.LastInsertId()
-
-	return int(id), err
-}
-
-func (b BookStore) DeleteBook(id int) (int, error) {
-	var row int64
-
-	res, err := b.db.Query(driver.CheckBookBYID, id)
-	if !res.Next() || err != nil {
-		return int(row), err
-	}
-
-	result, err := b.db.Exec(driver.DeleteBookQuery, id)
-	if err != nil {
-		return int(row), err
-	}
-
-	row, err = result.RowsAffected()
 	if err != nil {
 		return 0, err
 	}
 
-	return int(row), nil
+	return int(id), err
 }
 
-func (b BookStore) PutBook(book *models.Book) (models.Book, error) {
-	var output models.Book
-
-	if !b.checkBookBid(book.ID) {
-		return output, errors.New("author or book not exits")
+func (b BookStore) DeleteBook(ctx context.Context, id int) (int, error) {
+	result, err := b.db.ExecContext(ctx, drivers.DeleteBookQuery, id)
+	if err != nil {
+		return 0, err
 	}
 
-	_, err := b.db.Exec(driver.UpdateBook, book.Title, book.Publication, book.PublicationDate, book.ID)
+	r, err := result.RowsAffected()
 	if err != nil {
-		return output, errors.New("error in updating book")
+		return 0, err
+	}
+
+	return int(r), nil
+}
+
+func (b BookStore) PutBook(ctx context.Context, id int, book *models.Book) (models.Book, error) {
+	_, err := b.db.ExecContext(ctx, drivers.UpdateBook, book.Title, book.Publication, book.PublicationDate, id)
+	if err != nil {
+		return models.Book{}, errors.New("error in updating book")
 	}
 
 	return *book, nil
 }
 
-func (b BookStore) checkBookBid(id int) bool {
-	res, err := b.db.Query(driver.CheckBookBYID, id)
-	if !res.Next() || err != nil {
+func (b BookStore) DeleteBookByAuthorID(ctx context.Context, id int) error {
+	_, err := b.db.ExecContext(ctx, drivers.DeleteBookByAuthorID, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b BookStore) CheckBook(ctx context.Context, book *models.Book) bool {
+	result, err := b.db.QueryContext(ctx, drivers.CheckBook, book.Title, book.Publication, book.PublicationDate, book.Author.ID)
+	if err != nil || !result.Next() {
 		return false
 	}
 
 	return true
 }
 
-func (b BookStore) GetAuthorByID(id int) (models.Author, error) {
-	var output models.Author
-
-	ResAuthor, err := b.db.Query(driver.SelectAuthorByID, id)
-	if err != nil {
-		return output, err
+func (b BookStore) CheckBookBid(ctx context.Context, id int) bool {
+	res, err := b.db.QueryContext(ctx, drivers.CheckBookBYID, id)
+	if err != nil || !res.Next() {
+		return false
 	}
 
-	if ResAuthor.Next() {
-		err := ResAuthor.Scan(&output.ID, &output.FirstName, &output.LastName, &output.Dob, &output.PenName)
-		if err != nil {
-			return models.Author{}, err
-		}
-	}
-
-	return output, nil
-}
-
-func (b BookStore) DeleteBookByAuthorID(id int) error {
-	_, err := b.db.Exec("DELETE FROM Book WHERE AuthorID=?", id)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return true
 }

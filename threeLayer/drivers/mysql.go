@@ -1,6 +1,10 @@
-package driver
+package drivers
 
-import "database/sql"
+import (
+	"database/sql"
+
+	_ "github.com/go-sql-driver/mysql"
+)
 
 const (
 	Driver = "mysql"
@@ -14,8 +18,9 @@ const (
 	InsertIntoBook = "INSERT INTO Book (title,publication,publicationDate,authorID) " +
 		"VALUES (? ,?, ?, ?)"
 	DeleteBookQuery       = "DELETE FROM Book WHERE BookID = ?"
+	DeleteBookByAuthorID  = "DELETE FROM Book WHERE AuthorID=?"
 	CheckBook             = "SELECT bookID FROM Book WHERE title = ? AND publication =? AND publicationDate= ? AND authorID =?"
-	CheckBookBYID         = "SELECT * FROM Book WHERE bookID = ?"
+	CheckBookBYID         = "SELECT bookID FROM Book WHERE bookID = ?"
 	SelectFromBook        = "SELECT * FROM Book;"
 	SelectFromBookByTitle = "SELECT * FROM Book WHERE title =?;"
 	SelectFromBookByID    = "SELECT * FROM Book WHERE bookID= ?"

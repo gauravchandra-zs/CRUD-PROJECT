@@ -1,6 +1,7 @@
 package handlerauthor
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -31,7 +32,14 @@ func (h HandlerAuthor) PostAuthor(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	_, err = h.serviceAuthor.PostAuthor(author)
+	if !ValidateAuthor(author) {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	ctx := context.Background()
+
+	_, err = h.serviceAuthor.PostAuthor(ctx, author)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -59,7 +67,14 @@ func (h HandlerAuthor) PutAuthor(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	author, err = h.serviceAuthor.PutAuthor(id, author)
+	if !ValidateAuthor(author) {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	ctx := context.Background()
+
+	author, err = h.serviceAuthor.PutAuthor(ctx, id, author)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -73,7 +88,10 @@ func (h HandlerAuthor) PutAuthor(w http.ResponseWriter, req *http.Request) {
 
 	w.WriteHeader(http.StatusAccepted)
 
-	_, _ = w.Write(body)
+	_, err = w.Write(body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func (h HandlerAuthor) DeleteAuthor(w http.ResponseWriter, req *http.Request) {
@@ -85,11 +103,21 @@ func (h HandlerAuthor) DeleteAuthor(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	_, err = h.serviceAuthor.DeleteAuthor(id)
+	ctx := context.Background()
+
+	_, err = h.serviceAuthor.DeleteAuthor(ctx, id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func ValidateAuthor(author models.Author) bool {
+	if author.FirstName == "" || author.LastName == "" || author.Dob == "" || author.PenName == "" {
+		return false
+	}
+
+	return true
 }

@@ -1,9 +1,9 @@
 package servicebook
 
 import (
+	"context"
 	"errors"
 	"log"
-	"strings"
 
 	"Projects/GoLang-Interns-2022/threeLayer/datastore"
 	"Projects/GoLang-Interns-2022/threeLayer/models"
@@ -18,13 +18,18 @@ func New(bookStore datastore.Book, author datastore.Author) ServiceBook {
 	return ServiceBook{bookStore, author}
 }
 
-func (s ServiceBook) GetAllBooks(params map[string]string) ([]models.Book, error) {
-	var output []models.Book
+func (s ServiceBook) GetAllBooks(ctx context.Context) ([]models.Book, error) {
+	title, ok := ctx.Value("title").(string)
+	if !ok {
+		log.Print("title is not of type string")
+	}
 
-	title := params["title"]
-	authorInclude := params["authorInclude"]
+	includeAuthor, ok := ctx.Value("includeAuthor").(string)
+	if !ok {
+		log.Print("includeAuthor is not of type string")
+	}
 
-	output, err := s.bookStore.GetAllBooks(title)
+	output, err := s.bookStore.GetAllBooks(ctx, title)
 	if err != nil {
 		return output, err
 	}
@@ -32,8 +37,8 @@ func (s ServiceBook) GetAllBooks(params map[string]string) ([]models.Book, error
 	for i := 0; i < len(output); i++ {
 		var author models.Author
 
-		if authorInclude == "true" {
-			author, err = s.authorStore.GetAuthorByID(output[i].Author.ID)
+		if includeAuthor == "true" {
+			author, err = s.authorStore.GetAuthorByID(ctx, output[i].Author.ID)
 			if err != nil {
 				return output, err
 			}
@@ -45,21 +50,17 @@ func (s ServiceBook) GetAllBooks(params map[string]string) ([]models.Book, error
 	return output, nil
 }
 
-func (s ServiceBook) GetBookByID(id int) (models.Book, error) {
+func (s ServiceBook) GetBookByID(ctx context.Context, id int) (models.Book, error) {
 	var output models.Book
 
 	var err error
 
-	if id <= 0 {
-		return output, errors.New("invalid id")
-	}
-
-	output, err = s.bookStore.GetBookByID(id)
+	output, err = s.bookStore.GetBookByID(ctx, id)
 	if err != nil || output.Author.ID <= 0 {
 		return output, err
 	}
 
-	output.Author, err = s.authorStore.GetAuthorByID(output.Author.ID)
+	output.Author, err = s.authorStore.GetAuthorByID(ctx, output.Author.ID)
 	if err != nil {
 		return output, err
 	}
@@ -67,81 +68,55 @@ func (s ServiceBook) GetBookByID(id int) (models.Book, error) {
 	return output, nil
 }
 
-func (s ServiceBook) PostBook(book *models.Book) (int, error) {
-	if !validateBook(book) || !validateAuthor(book.Author) {
-		return 0, errors.New("invalid book or author")
+func (s ServiceBook) PostBook(ctx context.Context, book *models.Book) (int, error) {
+	if s.bookStore.CheckBook(ctx, book) || !s.authorStore.CheckAuthorByID(ctx, book.Author.ID) {
+		return 0, errors.New("book exist already")
 	}
 
-	insertedID, err := s.authorStore.PostAuthor(book.Author)
-	if err != nil || insertedID <= 0 {
-		log.Print(err)
-	}
-
-	book.Author.ID = insertedID
-
-	insertedID, err = s.bookStore.PostBook(book)
+	id, err := s.bookStore.PostBook(ctx, book)
 	if err != nil {
+		log.Print(err)
 		return 0, err
 	}
 
-	return insertedID, nil
+	return id, nil
 }
 
-func (s ServiceBook) DeleteBook(id int) (int, error) {
-	if id <= 0 {
-		return 0, errors.New("invalid id")
+func (s ServiceBook) DeleteBook(ctx context.Context, id int) (int, error) {
+	if !s.bookStore.CheckBookBid(ctx, id) {
+		return 0, errors.New("book not exist")
 	}
 
-	deletedID, err := s.bookStore.DeleteBook(id)
-	if err != nil || deletedID <= 0 {
-		return deletedID, errors.New("unsuccessful deletion")
+	rowEffected, err := s.bookStore.DeleteBook(ctx, id)
+	if err != nil {
+		return rowEffected, errors.New("unsuccessful deletion")
 	}
 
-	return deletedID, nil
+	return rowEffected, nil
 }
 
-func (s ServiceBook) PutBook(book *models.Book) (models.Book, error) {
+func (s ServiceBook) PutBook(ctx context.Context, id int, book *models.Book) (models.Book, error) {
 	var output models.Book
 
-	if !validateBook(book) || !validateAuthor(book.Author) {
-		return output, errors.New("invalid book or author")
+	if !s.authorStore.CheckAuthorByID(ctx, book.Author.ID) {
+		return models.Book{}, errors.New("author not present")
 	}
 
-	_, err := s.authorStore.PutAuthor(book.Author.ID, book.Author)
+	author, err := s.authorStore.PutAuthor(ctx, book.Author.ID, book.Author)
 	if err != nil {
 		return models.Book{}, err
 	}
 
-	output, err = s.bookStore.PutBook(book)
+	book.Author = author
+
+	if !s.bookStore.CheckBookBid(ctx, id) {
+		return output, err
+	}
+
+	output, err = s.bookStore.PutBook(ctx, id, book)
 	if err != nil {
 		return output, err
 	}
 
 	return output, nil
-}
-
-func validateBook(b *models.Book) bool {
-	slc := strings.Split(b.PublicationDate, "-")
-	sz := 3
-
-	switch {
-	case b.Publication != "Scholastic" && b.Publication != "Penguin" && b.Publication != "Arihanth":
-		return false
-	case len(slc) < sz:
-		return false
-	case slc[2] >= "2022" || slc[2] < "1880":
-		return false
-	case b.Title == "":
-		return false
-	default:
-		return true
-	}
-}
-
-func validateAuthor(author models.Author) bool {
-	if author.FirstName == "" || author.LastName == "" || author.Dob == "" || author.PenName == "" {
-		return false
-	}
-
-	return true
 }
