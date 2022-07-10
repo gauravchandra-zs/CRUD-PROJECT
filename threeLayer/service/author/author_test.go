@@ -6,100 +6,19 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+
+	"Projects/GoLang-Interns-2022/threeLayer/datastore"
 	"Projects/GoLang-Interns-2022/threeLayer/models"
 )
 
-type mockAuthorStore struct {
-}
-
-func (m mockAuthorStore) CheckAuthorByID(ctx context.Context, id int) bool {
-	return true
-}
-
-func (m mockAuthorStore) CheckAuthor(ctx context.Context, author models.Author) bool {
-	return true
-}
-
-func (m mockAuthorStore) PostAuthor(ctx context.Context, author models.Author) (int, error) {
-	if author.FirstName == "gaurav" && author.LastName == "chandra" {
-		return 0, errors.New("author already exist")
-	}
-
-	return 1, nil
-}
-
-func (m mockAuthorStore) DeleteAuthor(ctx context.Context, id int) (int, error) {
-	if id <= 0 {
-		return 0, errors.New("invalid id")
-	}
-
-	if id == 10 {
-		return 0, errors.New("author not exist")
-	}
-
-	return 1, nil
-}
-
-func (m mockAuthorStore) PutAuthor(ctx context.Context, id int, author models.Author) (models.Author, error) {
-	if id <= 0 || id >= 100 {
-		return models.Author{}, errors.New("invalid author id")
-	}
-
-	return author, nil
-}
-
-func (m mockAuthorStore) GetAuthorByID(ctx context.Context, id int) (models.Author, error) {
-	return models.Author{}, nil
-}
-
-type mockBookStore struct {
-}
-
-func (m mockBookStore) CheckBook(ctx context.Context, book *models.Book) bool {
-	return true
-}
-
-func (m mockBookStore) CheckBookBid(ctx context.Context, id int) bool {
-	return true
-}
-
-func (m mockBookStore) GetAllBooks(ctx context.Context, title string) ([]models.Book, error) {
-	return nil, nil
-}
-
-func (m mockBookStore) GetBookByID(ctx context.Context, id int) (models.Book, error) {
-	return models.Book{}, nil
-}
-
-func (m mockBookStore) PostBook(ctx context.Context, book *models.Book) (int, error) {
-	return 0, nil
-}
-
-func (m mockBookStore) DeleteBook(ctx context.Context, id int) (int, error) {
-	return 0, nil
-}
-
-func (m mockBookStore) PutBook(ctx context.Context, id int, book *models.Book) (models.Book, error) {
-	return models.Book{}, nil
-}
-
-func (m mockBookStore) DeleteBookByAuthorID(ctx context.Context, id int) error {
-	if id <= 0 {
-		return errors.New("invalid id")
-	}
-
-	if id == 5 {
-		return errors.New("book not exist")
-	}
-
-	return nil
-}
-
 func TestServiceAuthor_PostAuthor(t *testing.T) {
 	testcases := []struct {
-		desc       string
-		body       models.Author
-		expectedID int
+		desc        string
+		author      models.Author
+		id          int
+		checkAuthor bool
+		err         error
 	}{
 		{
 			"valid case", models.Author{
@@ -107,32 +26,40 @@ func TestServiceAuthor_PostAuthor(t *testing.T) {
 				LastName:  "chaudhari",
 				Dob:       "18-07-2001",
 				PenName:   "GCC",
-			}, 1,
+			}, 1, false, nil,
 		},
 		{
 			"invalid case", models.Author{
-				FirstName: "",
+				FirstName: "xyz",
 				LastName:  "chandra",
 				Dob:       "18-07-2001",
 				PenName:   "GCC",
-			}, 0,
+			}, 0, true, nil,
 		},
 		{
-			"invalid case author exist", models.Author{
+			"invalid case", models.Author{
 				FirstName: "gaurav",
 				LastName:  "chandra",
 				Dob:       "18-07-2001",
 				PenName:   "GCC",
-			}, 0,
+			}, 0, false, errors.New("error"),
 		},
 	}
 	for _, v := range testcases {
-		a := New(mockAuthorStore{}, mockBookStore{})
-		ctx := context.Background()
-		id, _ := a.PostAuthor(ctx, v.body)
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
 
-		if !reflect.DeepEqual(id, v.expectedID) {
-			t.Errorf("Expected %v\tGot %v", v.expectedID, id)
+		mockBookStore := datastore.NewMockBook(mockCtrl)
+		mockAuthorStore := datastore.NewMockAuthor(mockCtrl)
+		ctx := context.Background()
+		a := New(mockAuthorStore, mockBookStore)
+
+		mockAuthorStore.EXPECT().CheckAuthor(ctx, v.author).Return(v.checkAuthor).AnyTimes()
+		mockAuthorStore.EXPECT().PostAuthor(ctx, v.author).Return(v.id, v.err).AnyTimes()
+		id, _ := a.PostAuthor(ctx, v.author)
+
+		if !reflect.DeepEqual(id, v.id) {
+			t.Errorf("Expected %v\tGot %v", v.id, id)
 		}
 	}
 }
@@ -141,8 +68,10 @@ func TestServiceAuthor_PutAuthor(t *testing.T) {
 	testcases := []struct {
 		desc           string
 		id             int
-		body           models.Author
+		author         models.Author
 		expectedOutput models.Author
+		checkAuthor    bool
+		err            error
 	}{
 		{
 			"valid case", 1, models.Author{
@@ -157,33 +86,42 @@ func TestServiceAuthor_PutAuthor(t *testing.T) {
 				LastName:  "chandra",
 				Dob:       "18-07-2001",
 				PenName:   "GCC",
-			},
+			}, true, nil,
 		},
 
 		{
-			"invalid id", 0, models.Author{
-				ID:        0,
+			"invalid id", 2, models.Author{
+				ID:        2,
 				FirstName: "gaurav",
 				LastName:  "chandra",
 				Dob:       "18-07-2001",
 				PenName:   "GCC",
-			}, models.Author{},
+			}, models.Author{}, false, nil,
 		},
 		{
-			"author not exist", 100, models.Author{
+			"invalid", 100, models.Author{
 				ID:        100,
 				FirstName: "gaurav",
 				LastName:  "chaudhari",
 				Dob:       "18-07-2001",
 				PenName:   "GCC",
-			}, models.Author{},
+			}, models.Author{}, true, errors.New("err"),
 		},
 	}
-	for _, v := range testcases {
-		a := New(mockAuthorStore{}, mockBookStore{})
-		ctx := context.Background()
-		output, _ := a.PutAuthor(ctx, v.id, v.body)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
+	mockBookStore := datastore.NewMockBook(mockCtrl)
+	mockAuthorStore := datastore.NewMockAuthor(mockCtrl)
+	ctx := context.Background()
+	a := New(mockAuthorStore, mockBookStore)
+
+	for _, v := range testcases {
+
+		mockAuthorStore.EXPECT().CheckAuthorByID(ctx, v.id).Return(v.checkAuthor).AnyTimes()
+		mockAuthorStore.EXPECT().PutAuthor(ctx, v.id, v.author).Return(v.expectedOutput, v.err).AnyTimes()
+
+		output, _ := a.PutAuthor(ctx, v.id, v.author)
 		if !reflect.DeepEqual(v.expectedOutput, output) {
 			t.Errorf("Expected %v\tGot %v", v.expectedOutput, output)
 		}
@@ -192,28 +130,40 @@ func TestServiceAuthor_PutAuthor(t *testing.T) {
 
 func TestServiceAuthor_DeleteAuthor(t *testing.T) {
 	testcases := []struct {
-		desc      string
-		id        int
-		deletedID int
+		desc        string
+		id          int
+		deletedID   int
+		checkAuthor bool
+		errBook     error
+		errAuthor   error
 	}{
 		{
-			"valid case", 1, 1,
+			"valid case", 1, 1, true, nil, nil,
 		},
 		{
-			"invalid case", -1, 0,
+			"invalid case", 2, 0, true, errors.New("err"), nil,
 		},
 		{
-			"valid case", 5, 0,
+			"valid case", 5, 0, true, nil, errors.New("err"),
 		},
 		{
-			"valid case", 10, 0,
+			"valid case", 10, 0, false, nil, nil,
 		},
 	}
 	for _, v := range testcases {
-		a := New(mockAuthorStore{}, mockBookStore{})
-		ctx := context.Background()
-		id, _ := a.DeleteAuthor(ctx, v.id)
+		mockCtrl := gomock.NewController(t)
+		defer mockCtrl.Finish()
 
+		mockBookStore := datastore.NewMockBook(mockCtrl)
+		mockAuthorStore := datastore.NewMockAuthor(mockCtrl)
+		ctx := context.Background()
+		a := New(mockAuthorStore, mockBookStore)
+
+		mockAuthorStore.EXPECT().CheckAuthorByID(ctx, v.id).Return(v.checkAuthor).AnyTimes()
+		mockBookStore.EXPECT().DeleteBookByAuthorID(ctx, v.id).Return(v.errBook).AnyTimes()
+		mockAuthorStore.EXPECT().DeleteAuthor(ctx, v.id).Return(v.deletedID, v.errAuthor).AnyTimes()
+
+		id, _ := a.DeleteAuthor(ctx, v.id)
 		if id != v.deletedID {
 			t.Errorf("test case fail")
 		}

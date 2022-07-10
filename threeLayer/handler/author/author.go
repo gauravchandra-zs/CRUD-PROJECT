@@ -22,11 +22,15 @@ func New(author service.Author) HandlerAuthor {
 }
 
 func (h HandlerAuthor) PostAuthor(w http.ResponseWriter, req *http.Request) {
-	body, _ := io.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	var author models.Author
 
-	err := json.Unmarshal(body, &author)
+	err = json.Unmarshal(body, &author)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return

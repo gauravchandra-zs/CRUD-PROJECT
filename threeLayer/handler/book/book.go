@@ -66,16 +66,8 @@ func (h HandlerBook) GetBookById(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	data, err := json.Marshal(output)
+	err = marshal(w, output)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	_, err = w.Write(data)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
@@ -147,15 +139,8 @@ func (h HandlerBook) PutBook(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	body, err = json.Marshal(newData)
+	err = marshal(w, newData)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	_, err = w.Write(body)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -206,4 +191,19 @@ func validateAuthor(author models.Author) bool {
 	}
 
 	return true
+}
+
+func marshal(w http.ResponseWriter, book models.Book) error {
+	body, err := json.Marshal(book)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return err
+	}
+
+	_, err = w.Write(body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+	return nil
 }
