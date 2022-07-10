@@ -56,10 +56,11 @@ func TestPostAuthor(t *testing.T) {
 			}, http.StatusBadRequest, errors.New("err"),
 		},
 	}
-	for _, v := range testcases {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+	mockCtrl := gomock.NewController(t)
 
+	defer mockCtrl.Finish()
+
+	for _, v := range testcases {
 		mockServiceAuthor := service.NewMockAuthor(mockCtrl)
 		a := New(mockServiceAuthor)
 
@@ -72,7 +73,9 @@ func TestPostAuthor(t *testing.T) {
 		w := httptest.NewRecorder()
 		ctx := context.Background()
 		mockServiceAuthor.EXPECT().PostAuthor(ctx, v.body).Return(1, v.err).AnyTimes()
+
 		a.PostAuthor(w, req)
+
 		if !reflect.DeepEqual(w.Result().StatusCode, v.expectedStatus) {
 			t.Errorf("Expected %v\tGot %v", v.expectedStatus, w.Result().StatusCode)
 		}
@@ -130,10 +133,11 @@ func TestPutAuthor(t *testing.T) {
 			models.Author{}, http.StatusBadRequest, nil,
 		},
 	}
-	for _, v := range testcases {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+	mockCtrl := gomock.NewController(t)
 
+	defer mockCtrl.Finish()
+
+	for _, v := range testcases {
 		mockServicAuthor := service.NewMockAuthor(mockCtrl)
 		a := New(mockServicAuthor)
 
@@ -187,10 +191,11 @@ func TestDeleteAuthor(t *testing.T) {
 			"invalid case", "-1", http.StatusBadRequest, nil,
 		},
 	}
-	for _, v := range testcases {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+	mockCtrl := gomock.NewController(t)
 
+	defer mockCtrl.Finish()
+
+	for _, v := range testcases {
 		mockServiceAuthor := datastore.NewMockAuthor(mockCtrl)
 		a := New(mockServiceAuthor)
 

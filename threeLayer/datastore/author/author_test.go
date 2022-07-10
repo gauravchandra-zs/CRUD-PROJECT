@@ -118,11 +118,11 @@ func TestAuthorStore_PostAuthor(t *testing.T) {
 
 		ctx := context.Background()
 		id, _ := a.PostAuthor(ctx, v.body)
+
 		if !reflect.DeepEqual(id, v.lastInsertedID) {
 			t.Errorf("Expected %v\tGot %v", v.lastInsertedID, id)
 		}
 	}
-
 }
 
 func TestAuthorStore_DeleteAuthor(t *testing.T) {
@@ -198,10 +198,11 @@ func TestAuthorStore_GetAuthorByID(t *testing.T) {
 	for _, v := range testcases {
 		db, mock := NewMock()
 		a := New(db)
+		ctx := context.Background()
 
 		mock.ExpectQuery(drivers.SelectAuthorByID).WithArgs(v.id).WillReturnRows(v.rows).WillReturnError(v.err)
-		ctx := context.Background()
 		output, _ := a.GetAuthorByID(ctx, v.id)
+
 		if !reflect.DeepEqual(output, v.expectedOutput) {
 			t.Errorf("expected %v,got %v", v.expectedOutput, output)
 		}
@@ -242,11 +243,11 @@ func TestAuthorStore_CheckAuthor(t *testing.T) {
 
 		ctx := context.Background()
 		flag := a.CheckAuthor(ctx, v.body)
+
 		if !reflect.DeepEqual(flag, v.expOutput) {
 			t.Errorf("Expected %v\tGot %v", v.expOutput, flag)
 		}
 	}
-
 }
 
 func TestAuthorStore_CheckAuthorByID(t *testing.T) {
@@ -274,9 +275,9 @@ func TestAuthorStore_CheckAuthorByID(t *testing.T) {
 
 		ctx := context.Background()
 		flag := a.CheckAuthorByID(ctx, v.id)
+
 		if !reflect.DeepEqual(flag, v.expOutput) {
 			t.Errorf("Expected %v\tGot %v", v.expOutput, flag)
 		}
 	}
-
 }

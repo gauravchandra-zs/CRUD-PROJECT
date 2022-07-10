@@ -62,6 +62,7 @@ func TestGetAllBooks(t *testing.T) {
 		a := New(db)
 
 		mock.ExpectQuery(drivers.SelectFromBook).WillReturnRows(v.rows).WillReturnError(v.err)
+
 		ctx := context.Background()
 		output, _ := a.GetAllBooks(ctx)
 
@@ -109,6 +110,7 @@ func TestGetAllWithTitle(t *testing.T) {
 		a := New(db)
 
 		mock.ExpectQuery(drivers.SelectFromBookByTitle).WithArgs(v.title).WillReturnRows(v.rows).WillReturnError(v.err)
+
 		ctx := context.Background()
 		output, _ := a.GetAllBooksByTitle(ctx, v.title)
 
@@ -151,9 +153,9 @@ func TestGetBookByID(t *testing.T) {
 	for _, v := range testcases {
 		db, mock := NewMock()
 		a := New(db)
+		ctx := context.Background()
 
 		mock.ExpectQuery(drivers.SelectFromBookByID).WithArgs(v.id).WillReturnRows(v.rows).WillReturnError(v.err)
-		ctx := context.Background()
 
 		output, _ := a.GetBookByID(ctx, v.id)
 		if !reflect.DeepEqual(output, v.expectedOutput) {
@@ -210,6 +212,7 @@ func TestPostBook(t *testing.T) {
 
 		ctx := context.Background()
 		id, _ := a.PostBook(ctx, &v.body)
+
 		if !reflect.DeepEqual(id, v.lastInsertedID) {
 			t.Errorf("Expected %v\tGot %v", v.lastInsertedID, id)
 		}
@@ -242,6 +245,7 @@ func TestDeleteBook(t *testing.T) {
 		a := New(db)
 
 		mock.ExpectExec(drivers.DeleteBookQuery).WithArgs(v.id).WillReturnResult(v.res).WillReturnError(v.err)
+
 		ctx := context.Background()
 
 		rowDeleted, _ := a.DeleteBook(ctx, v.id)
@@ -325,6 +329,7 @@ func TestDeleteBookByAuthorID(t *testing.T) {
 		a := New(db)
 
 		mock.ExpectExec(drivers.DeleteBookByAuthorID).WithArgs(v.id).WillReturnResult(sqlmock.NewResult(0, 0)).WillReturnError(v.err)
+
 		ctx := context.Background()
 
 		err := a.DeleteBookByAuthorID(ctx, v.id)

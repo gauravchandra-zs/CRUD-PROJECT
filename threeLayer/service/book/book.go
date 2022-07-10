@@ -3,7 +3,6 @@ package servicebook
 import (
 	"context"
 	"errors"
-	"log"
 
 	"Projects/GoLang-Interns-2022/threeLayer/datastore"
 	"Projects/GoLang-Interns-2022/threeLayer/models"
@@ -18,29 +17,27 @@ func New(bookStore datastore.Book, author datastore.Author) ServiceBook {
 	return ServiceBook{bookStore, author}
 }
 
-func (s ServiceBook) GetAllBooks(ctx context.Context) ([]models.Book, error) {
-	title, ok := ctx.Value("title").(string)
-	if !ok {
-		log.Print("title is not of type string")
-	}
+type Title string
+type IncludeAuthor string
 
-	includeAuthor, ok := ctx.Value("includeAuthor").(string)
-	if !ok {
-		log.Print("includeAuthor is not of type string")
-	}
+func (s ServiceBook) GetAllBooks(ctx context.Context) ([]models.Book, error) {
+	title, _ := ctx.Value("title").(string)
+	includeAuthor, _ := ctx.Value("includeAuthor").(string)
+
 	var output []models.Book
+
 	var err error
 
 	if title == "" {
 		output, err = s.bookStore.GetAllBooks(ctx)
 	} else {
 		output, err = s.bookStore.GetAllBooksByTitle(ctx, title)
-
 	}
 
 	if err != nil {
 		return output, err
 	}
+
 	for i := 0; i < len(output); i++ {
 		var author models.Author
 
@@ -104,8 +101,8 @@ func (s ServiceBook) DeleteBook(ctx context.Context, id int) (int, error) {
 func (s ServiceBook) PutBook(ctx context.Context, id int, book *models.Book) (models.Book, error) {
 	var output models.Book
 
-	if !s.authorStore.CheckAuthorByID(ctx, book.Author.ID) {
-		return models.Book{}, errors.New("author not present")
+	if !s.authorStore.CheckAuthorByID(ctx, book.Author.ID) || !s.bookStore.CheckBookBid(ctx, id) {
+		return models.Book{}, errors.New("book or author not present")
 	}
 
 	author, err := s.authorStore.PutAuthor(ctx, book.Author.ID, book.Author)
@@ -114,10 +111,6 @@ func (s ServiceBook) PutBook(ctx context.Context, id int, book *models.Book) (mo
 	}
 
 	book.Author = author
-
-	if !s.bookStore.CheckBookBid(ctx, id) {
-		return models.Book{}, err
-	}
 
 	output, err = s.bookStore.PutBook(ctx, id, book)
 	if err != nil {

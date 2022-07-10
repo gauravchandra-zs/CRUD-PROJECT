@@ -27,105 +27,40 @@ func TestPostBook(t *testing.T) {
 		status int
 		err    error
 	}{
-		{
-			"valid case", models.Book{
-				Title: "RD sharma",
-				Author: models.Author{
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Arihanth",
-				PublicationDate: "12-08-2011",
-			}, http.StatusCreated, nil,
+		{"valid case", models.Book{Title: "RD sharma", Author: models.Author{FirstName: "gaurav", LastName: "chandra",
+			Dob: "18-07-2001", PenName: "GCC"}, Publication: "Arihanth", PublicationDate: "12-08-2011",
+		}, http.StatusCreated, nil},
+		{"invalid case", models.Book{Title: "", Author: models.Author{FirstName: "gaurav", LastName: "chandra",
+			Dob: "18-07-2001", PenName: "GCC"}, Publication: "NCERT", PublicationDate: "12-08-2011"}, http.StatusBadRequest, nil},
+		{"invalid case", "Book", http.StatusInternalServerError, nil},
+		{"invalid case", models.Book{Title: "RD sharma", Author: models.Author{FirstName: "gaurav",
+			LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"}, Publication: "Arihanth",
+			PublicationDate: "12-08-2011"}, http.StatusBadRequest, errors.New("err")},
+		{"invalid case", models.Book{Title: "RD sharma", Author: models.Author{FirstName: "gaurav",
+			LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"},
+			Publication: "XYZ", PublicationDate: "12-08-2011"}, http.StatusBadRequest, nil,
 		},
-		{
-			"invalid case", models.Book{
-				Title: "",
-				Author: models.Author{
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "NCERT",
-				PublicationDate: "12-08-2011",
-			}, http.StatusBadRequest, nil,
+		{"invalid case", models.Book{Title: "RD sharma", Author: models.Author{FirstName: "gaurav",
+			LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"},
+			Publication:     "Arihanth",
+			PublicationDate: "2000"}, http.StatusBadRequest, nil,
 		},
-		{
-			"invalid case", "Book", http.StatusInternalServerError, nil,
+		{"invalid case", models.Book{Title: "RD sharma", Author: models.Author{FirstName: "gaurav",
+			LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"},
+			Publication:     "Arihanth",
+			PublicationDate: "18-07-2023"}, http.StatusBadRequest, nil,
 		},
-		{
-			"invalid case", models.Book{
-				Title: "RD sharma",
-				Author: models.Author{
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Arihanth",
-				PublicationDate: "12-08-2011",
-			}, http.StatusBadRequest, errors.New("err"),
-		},
-		{
-			"invalid case", models.Book{
-				Title: "RD sharma",
-				Author: models.Author{
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "XYZ",
-				PublicationDate: "12-08-2011",
-			}, http.StatusBadRequest, nil,
-		},
-		{
-			"invalid case", models.Book{
-				Title: "RD sharma",
-				Author: models.Author{
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Arihanth",
-				PublicationDate: "2000",
-			}, http.StatusBadRequest, nil,
-		},
-		{
-			"invalid case", models.Book{
-				Title: "RD sharma",
-				Author: models.Author{
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Arihanth",
-				PublicationDate: "18-07-2023",
-			}, http.StatusBadRequest, nil,
-		},
-		{
-			"invalid case", models.Book{
-				Title: "",
-				Author: models.Author{
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Arihanth",
-				PublicationDate: "18-07-2000",
-			}, http.StatusBadRequest, nil,
+		{"invalid case", models.Book{Title: "", Author: models.Author{FirstName: "gaurav", LastName: "chandra",
+			Dob: "18-07-2001", PenName: "GCC"},
+			Publication:     "Arihanth",
+			PublicationDate: "18-07-2000"}, http.StatusBadRequest, nil,
 		},
 	}
-	for _, v := range testcases {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+	mockCtrl := gomock.NewController(t)
 
+	defer mockCtrl.Finish()
+
+	for _, v := range testcases {
 		mockServiceBook := service.NewMockBook(mockCtrl)
 		a := New(mockServiceBook)
 
@@ -166,10 +101,11 @@ func TestDeleteBook(t *testing.T) {
 			"valid case", "-1", http.StatusBadRequest, nil,
 		},
 	}
-	for _, v := range testcases {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+	mockCtrl := gomock.NewController(t)
 
+	defer mockCtrl.Finish()
+
+	for _, v := range testcases {
 		mockServiceBook := service.NewMockBook(mockCtrl)
 		a := New(mockServiceBook)
 
@@ -205,10 +141,11 @@ func TestGetAllBooks(t *testing.T) {
 		},
 		{"invalid case", []models.Book{}, errors.New("err")},
 	}
-	for _, v := range testcases {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+	mockCtrl := gomock.NewController(t)
 
+	defer mockCtrl.Finish()
+
+	for _, v := range testcases {
 		mockServiceBook := service.NewMockBook(mockCtrl)
 		a := New(mockServiceBook)
 		req := httptest.NewRequest(http.MethodGet, "/books", nil)
@@ -268,10 +205,11 @@ func TestGetBookByID(t *testing.T) {
 		{"invalid case", "2", models.Book{},
 			http.StatusBadRequest, errors.New("err")},
 	}
-	for _, v := range testcases {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+	mockCtrl := gomock.NewController(t)
 
+	defer mockCtrl.Finish()
+
+	for _, v := range testcases {
 		mockServiceBook := service.NewMockBook(mockCtrl)
 		a := New(mockServiceBook)
 		req := httptest.NewRequest(http.MethodGet, "/book/{id}"+v.id, nil)
@@ -281,7 +219,7 @@ func TestGetBookByID(t *testing.T) {
 
 		mockServiceBook.EXPECT().GetBookByID(context.Background(), id).Return(v.expectedOutput, v.err).AnyTimes()
 
-		a.GetBookById(w, req)
+		a.GetBookByID(w, req)
 
 		data, err := io.ReadAll(w.Body)
 		if err != nil {
@@ -310,109 +248,44 @@ func TestPutBook(t *testing.T) {
 		expectedStatus int
 		err            error
 	}{
-		{
-			"valid case", 1, models.Book{
-				ID:    1,
-				Title: "RD sharma",
-				Author: models.Author{
-					ID:        1,
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Arihanth",
-				PublicationDate: "12-08-2011",
-			}, models.Book{
-				ID:    1,
-				Title: "RD sharma",
-				Author: models.Author{
-					ID:        1,
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Arihanth",
-				PublicationDate: "12-08-2011",
-			}, http.StatusAccepted, nil,
+		{"valid case", 1, models.Book{ID: 1, Title: "RD sharma", Author: models.Author{ID: 1, FirstName: "gaurav",
+			LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"},
+			Publication: "Arihanth", PublicationDate: "12-08-2011"}, models.Book{ID: 1, Title: "RD sharma",
+			Author: models.Author{ID: 1, FirstName: "gaurav",
+				LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"}, Publication: "Arihanth", PublicationDate: "12-08-2011",
+		}, http.StatusAccepted, nil,
 		},
-
-		{
-			"invalid case", 2, models.Book{
-				ID:    2,
-				Title: "",
-				Author: models.Author{
-					ID:        1,
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "NCERT",
-				PublicationDate: "12-08-2011",
-			}, models.Book{},
-			http.StatusBadRequest, nil,
+		{"invalid case", 2, models.Book{ID: 2, Title: "", Author: models.Author{ID: 1, FirstName: "gaurav",
+			LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"}, Publication: "NCERT", PublicationDate: "12-08-2011",
+		}, models.Book{}, http.StatusBadRequest, nil,
 		},
-		{
-			"invalid case", 3, models.Book{
-				ID:    3,
-				Title: "xyz",
-				Author: models.Author{
-					ID:        1,
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Scholastic",
-				PublicationDate: "12-08-2011",
-			}, models.Book{},
+		{"invalid case", 3, models.Book{ID: 3, Title: "xyz", Author: models.Author{ID: 1, FirstName: "gaurav",
+			LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"}, Publication: "Scholastic", PublicationDate: "12-08-2011",
+		}, models.Book{},
 			http.StatusBadRequest, errors.New("err"),
 		},
-		{
-			"invalid case", -3, models.Book{
-				ID:    -3,
-				Title: "xyz",
-				Author: models.Author{
-					ID:        1,
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Scholastic",
-				PublicationDate: "12-08-2011",
-			}, models.Book{},
-			http.StatusBadRequest, nil,
+		{"invalid case", -3, models.Book{ID: -3, Title: "xyz", Author: models.Author{ID: 1, FirstName: "gaurav",
+			LastName: "chandra", Dob: "18-07-2001", PenName: "GCC",
+		}, Publication: "Scholastic", PublicationDate: "12-08-2011",
+		}, models.Book{}, http.StatusBadRequest, nil,
 		},
-		{
-			"invalid case", 3, models.Book{
-				ID:    3,
-				Title: "xyz",
-				Author: models.Author{
-					ID:        1,
-					FirstName: "",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Scholastic",
-				PublicationDate: "12-08-2011",
-			}, models.Book{},
-			http.StatusBadRequest, nil,
+		{"invalid case", 3, models.Book{ID: 3, Title: "xyz", Author: models.Author{ID: 1, FirstName: "",
+			LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"}, Publication: "Scholastic", PublicationDate: "12-08-2011",
+		}, models.Book{}, http.StatusBadRequest, nil,
 		},
 		{
 			"invalid case", 4, "book", models.Book{},
 			http.StatusBadRequest, nil,
 		},
 	}
-	for _, v := range testcases {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+	mockCtrl := gomock.NewController(t)
 
+	defer mockCtrl.Finish()
+
+	for _, v := range testcases {
 		mockServiceBook := service.NewMockBook(mockCtrl)
 		a := New(mockServiceBook)
+
 		myData, err := json.Marshal(v.body)
 		if err != nil {
 			t.Errorf(" error in marshaling")

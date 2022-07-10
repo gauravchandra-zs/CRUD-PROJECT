@@ -24,6 +24,9 @@ func New(b service.Book) HandlerBook {
 	}
 }
 
+type Title string
+type IncludeAuthor string
+
 func (h HandlerBook) GetAllBooks(w http.ResponseWriter, req *http.Request) {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, "title", req.URL.Query().Get("title"))
@@ -48,7 +51,7 @@ func (h HandlerBook) GetAllBooks(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (h HandlerBook) GetBookById(w http.ResponseWriter, req *http.Request) {
+func (h HandlerBook) GetBookByID(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 
 	id, err := strconv.Atoi(params["id"])
@@ -66,7 +69,8 @@ func (h HandlerBook) GetBookById(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	err = marshal(w, output)
+
+	err = marshal(w, &output)
 	if err != nil {
 		return
 	}
@@ -139,7 +143,7 @@ func (h HandlerBook) PutBook(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = marshal(w, newData)
+	err = marshal(w, &newData)
 	if err != nil {
 		return
 	}
@@ -193,7 +197,7 @@ func validateAuthor(author models.Author) bool {
 	return true
 }
 
-func marshal(w http.ResponseWriter, book models.Book) error {
+func marshal(w http.ResponseWriter, book *models.Book) error {
 	body, err := json.Marshal(book)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -205,5 +209,6 @@ func marshal(w http.ResponseWriter, book models.Book) error {
 		w.WriteHeader(http.StatusInternalServerError)
 		return err
 	}
+
 	return nil
 }

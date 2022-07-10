@@ -45,10 +45,11 @@ func TestServiceAuthor_PostAuthor(t *testing.T) {
 			}, 0, false, errors.New("error"),
 		},
 	}
-	for _, v := range testcases {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+	mockCtrl := gomock.NewController(t)
 
+	defer mockCtrl.Finish()
+
+	for _, v := range testcases {
 		mockBookStore := datastore.NewMockBook(mockCtrl)
 		mockAuthorStore := datastore.NewMockAuthor(mockCtrl)
 		ctx := context.Background()
@@ -109,6 +110,7 @@ func TestServiceAuthor_PutAuthor(t *testing.T) {
 		},
 	}
 	mockCtrl := gomock.NewController(t)
+
 	defer mockCtrl.Finish()
 
 	mockBookStore := datastore.NewMockBook(mockCtrl)
@@ -117,7 +119,6 @@ func TestServiceAuthor_PutAuthor(t *testing.T) {
 	a := New(mockAuthorStore, mockBookStore)
 
 	for _, v := range testcases {
-
 		mockAuthorStore.EXPECT().CheckAuthorByID(ctx, v.id).Return(v.checkAuthor).AnyTimes()
 		mockAuthorStore.EXPECT().PutAuthor(ctx, v.id, v.author).Return(v.expectedOutput, v.err).AnyTimes()
 
@@ -150,10 +151,11 @@ func TestServiceAuthor_DeleteAuthor(t *testing.T) {
 			"valid case", 10, 0, false, nil, nil,
 		},
 	}
-	for _, v := range testcases {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+	mockCtrl := gomock.NewController(t)
 
+	defer mockCtrl.Finish()
+
+	for _, v := range testcases {
 		mockBookStore := datastore.NewMockBook(mockCtrl)
 		mockAuthorStore := datastore.NewMockAuthor(mockCtrl)
 		ctx := context.Background()

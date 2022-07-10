@@ -30,7 +30,6 @@ func (a AuthorStore) PostAuthor(ctx context.Context, author models.Author) (int,
 	}
 
 	return int(id), nil
-
 }
 
 func (a AuthorStore) PutAuthor(ctx context.Context, id int, author models.Author) (models.Author, error) {

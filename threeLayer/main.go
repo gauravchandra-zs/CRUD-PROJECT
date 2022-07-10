@@ -36,7 +36,7 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/book", book.GetAllBooks).Methods(http.MethodGet)
-	r.HandleFunc("/book/{id}", book.GetBookById).Methods(http.MethodGet)
+	r.HandleFunc("/book/{id}", book.GetBookByID).Methods(http.MethodGet)
 	r.HandleFunc("/book", book.PostBook).Methods(http.MethodPost)
 	r.HandleFunc("/book/{id}", book.DeleteBook).Methods(http.MethodDelete)
 	r.HandleFunc("/book/{id}", book.PutBook).Methods(http.MethodPut)

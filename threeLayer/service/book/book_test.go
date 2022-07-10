@@ -12,14 +12,6 @@ import (
 	"Projects/GoLang-Interns-2022/threeLayer/models"
 )
 
-var author = models.Author{
-	ID:        1,
-	FirstName: "gaurav",
-	LastName:  "chandra",
-	Dob:       "18-07-2001",
-	PenName:   "GCC",
-}
-
 func TestGetAllBooks(t *testing.T) {
 	testcases := []struct {
 		desc           string
@@ -31,30 +23,16 @@ func TestGetAllBooks(t *testing.T) {
 			"valid case", map[string]any{
 				"title": "", "includeAuthor": "true"}, []models.Book{
 				{
-					ID:    1,
-					Title: "RD sharma",
-					Author: models.Author{
-						ID:        1,
-						FirstName: "gaurav",
-						LastName:  "chandra",
-						Dob:       "18-07-2001",
-						PenName:   "GCC",
-					},
-					Publication:     "Arihanth",
-					PublicationDate: "12-08-2011",
+					ID:          1,
+					Title:       "RD sharma",
+					Author:      models.Author{ID: 1, FirstName: "gaurav", LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"},
+					Publication: "Arihanth", PublicationDate: "12-08-2011",
 				},
 				{
-					ID:    2,
-					Title: "RD",
-					Author: models.Author{
-						ID:        1,
-						FirstName: "gaurav",
-						LastName:  "chandra",
-						Dob:       "18-07-2001",
-						PenName:   "GCC",
-					},
-					Publication:     "Arihanth",
-					PublicationDate: "12-08-2011",
+					ID:          2,
+					Title:       "RD",
+					Author:      models.Author{ID: 1, FirstName: "gaurav", LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"},
+					Publication: "Arihanth", PublicationDate: "12-08-2011",
 				},
 			}, errors.New("author not exist"),
 		},
@@ -62,30 +40,16 @@ func TestGetAllBooks(t *testing.T) {
 			"valid case", map[string]any{
 				"title": 1, "includeAuthor": true}, []models.Book{
 				{
-					ID:    1,
-					Title: "RD sharma",
-					Author: models.Author{
-						ID:        1,
-						FirstName: "gaurav",
-						LastName:  "chandra",
-						Dob:       "18-07-2001",
-						PenName:   "GCC",
-					},
-					Publication:     "Arihanth",
-					PublicationDate: "12-08-2011",
+					ID:          1,
+					Title:       "RD sharma",
+					Author:      models.Author{ID: 1, FirstName: "gaurav", LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"},
+					Publication: "Arihanth", PublicationDate: "12-08-2011",
 				},
 				{
-					ID:    2,
-					Title: "RD",
-					Author: models.Author{
-						ID:        1,
-						FirstName: "gaurav",
-						LastName:  "chandra",
-						Dob:       "18-07-2001",
-						PenName:   "GCC",
-					},
-					Publication:     "Arihanth",
-					PublicationDate: "12-08-2011",
+					ID:          2,
+					Title:       "RD",
+					Author:      models.Author{ID: 1, FirstName: "gaurav", LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"},
+					Publication: "Arihanth", PublicationDate: "12-08-2011",
 				},
 			}, nil,
 		},
@@ -95,12 +59,25 @@ func TestGetAllBooks(t *testing.T) {
 			errors.New("book not exists"),
 		},
 	}
+
+	var author = models.Author{
+		ID:        1,
+		FirstName: "gaurav",
+		LastName:  "chandra",
+		Dob:       "18-07-2001",
+		PenName:   "GCC",
+	}
+
+	mockCtrl := gomock.NewController(t)
+
+	defer mockCtrl.Finish()
+
 	for _, v := range testcases {
+		title := Title("Title")
+		includeAuthor := IncludeAuthor("IncludeAuthor")
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, "title", v.params["title"])
-		ctx = context.WithValue(ctx, "includeAuthor", v.params["includeAuthor"])
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+		ctx = context.WithValue(ctx, title, v.params["title"])
+		ctx = context.WithValue(ctx, includeAuthor, v.params["includeAuthor"])
 
 		mockBookStore := datastore.NewMockBook(mockCtrl)
 		mockAuthorStore := datastore.NewMockAuthor(mockCtrl)
@@ -159,10 +136,11 @@ func TestGetBookByID(t *testing.T) {
 				PublicationDate: "12-08-2011"}, nil, errors.New("author not exist"),
 		},
 	}
-	for _, v := range testcases {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+	mockCtrl := gomock.NewController(t)
 
+	defer mockCtrl.Finish()
+
+	for _, v := range testcases {
 		mockBookStore := datastore.NewMockBook(mockCtrl)
 		mockAuthorStore := datastore.NewMockAuthor(mockCtrl)
 		ctx := context.Background()
@@ -189,50 +167,28 @@ func TestPostBook(t *testing.T) {
 		err            error
 	}{
 		{
-			"valid case", models.Book{
-				Title: "RD sharma",
-				Author: models.Author{
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Arihanth",
-				PublicationDate: "12-08-2011",
+			"valid case", models.Book{Title: "RD sharma",
+				Author:      models.Author{FirstName: "gaurav", LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"},
+				Publication: "Arihanth", PublicationDate: "12-08-2011",
 			}, 2, false, true, nil,
 		},
-
-		{
-			"invalid book already exists", models.Book{
-				Title: "RD",
-				Author: models.Author{
-					FirstName: "gaurav",
-					LastName:  "chaudhari",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Penguin",
-				PublicationDate: "12-08-2011",
-			}, 0, true, false, nil,
+		{"invalid book already exists", models.Book{
+			Title:       "RD",
+			Author:      models.Author{FirstName: "gaurav", LastName: "chaudhari", Dob: "18-07-2001", PenName: "GCC"},
+			Publication: "Penguin", PublicationDate: "12-08-2011",
+		}, 0, true, false, nil,
 		},
-		{
-			"invalid case", models.Book{
-				Title: "xyz",
-				Author: models.Author{
-					FirstName: "gaurav",
-					LastName:  "chaudhari",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "NCERT",
-				PublicationDate: "12-08-2011",
-			}, 0, false, true, errors.New("err"),
+		{"invalid case", models.Book{Title: "xyz",
+			Author:      models.Author{FirstName: "gaurav", LastName: "chaudhari", Dob: "18-07-2001", PenName: "GCC"},
+			Publication: "NCERT", PublicationDate: "12-08-2011",
+		}, 0, false, true, errors.New("err"),
 		},
 	}
-	for _, v := range testcases {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+	mockCtrl := gomock.NewController(t)
 
+	defer mockCtrl.Finish()
+
+	for _, v := range testcases {
 		mockBookStore := datastore.NewMockBook(mockCtrl)
 		mockAuthorStore := datastore.NewMockAuthor(mockCtrl)
 		a := New(mockBookStore, mockAuthorStore)
@@ -260,101 +216,43 @@ func TestPutBook(t *testing.T) {
 		errAuthor   error
 		errBook     error
 	}{
-		{
-			"valid case", models.Book{
-				ID:    1,
-				Title: "RD sharma",
-				Author: models.Author{
-					ID:        1,
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Arihanth",
-				PublicationDate: "12-08-2011",
-			}, models.Book{
-				ID:    1,
-				Title: "RD sharma",
-				Author: models.Author{
-					ID:        1,
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Arihanth",
-				PublicationDate: "12-08-2011",
-			}, true, true, nil, nil,
+		{"valid case", models.Book{ID: 1, Title: "RD sharma",
+			Author:      models.Author{ID: 1, FirstName: "gaurav", LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"},
+			Publication: "Arihanth", PublicationDate: "12-08-2011",
+		}, models.Book{ID: 1, Title: "RD sharma",
+			Author:      models.Author{ID: 1, FirstName: "gaurav", LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"},
+			Publication: "Arihanth", PublicationDate: "12-08-2011",
+		}, true, true, nil, nil,
 		},
-		{
-			"invalid case", models.Book{
-				ID:    2,
-				Title: "",
-				Author: models.Author{
-					ID:        2,
-					FirstName: "gaurav",
-					LastName:  "",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "NCERT",
-				PublicationDate: "12-08-2011",
-			}, models.Book{}, false, true, nil, nil,
+		{"invalid case", models.Book{ID: 2, Title: "",
+			Author:      models.Author{ID: 2, FirstName: "gaurav", LastName: "", Dob: "18-07-2001", PenName: "GCC"},
+			Publication: "NCERT", PublicationDate: "12-08-2011",
+		}, models.Book{}, false, true, nil, nil,
 		},
-		{
-			"invalid case", models.Book{
-				ID:    3,
-				Title: "",
-				Author: models.Author{
-					ID:        3,
-					FirstName: "gaurav",
-					LastName:  "",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "NCERT",
-				PublicationDate: "12-08-2011",
-			}, models.Book{}, true, true,
+		{"invalid case", models.Book{ID: 3, Title: "",
+			Author:      models.Author{ID: 3, FirstName: "gaurav", LastName: "", Dob: "18-07-2001", PenName: "GCC"},
+			Publication: "NCERT", PublicationDate: "12-08-2011",
+		}, models.Book{}, true, true,
 			errors.New("err"), nil,
 		},
-		{
-			"invalid case", models.Book{
-				ID:    4,
-				Title: "",
-				Author: models.Author{
-					ID:        4,
-					FirstName: "gaurav",
-					LastName:  "",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "NCERT",
-				PublicationDate: "12-08-2011",
-			}, models.Book{}, true, true,
+		{"invalid case", models.Book{ID: 4, Title: "",
+			Author:      models.Author{ID: 4, FirstName: "gaurav", LastName: "", Dob: "18-07-2001", PenName: "GCC"},
+			Publication: "NCERT", PublicationDate: "12-08-2011",
+		}, models.Book{}, true, true,
 			nil, errors.New("err"),
 		},
-		{
-			"invalid case", models.Book{
-				ID:    5,
-				Title: "",
-				Author: models.Author{
-					ID:        5,
-					FirstName: "gaurav",
-					LastName:  "",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "NCERT",
-				PublicationDate: "12-08-2011",
-			}, models.Book{}, true, false,
+		{"invalid case", models.Book{ID: 5, Title: "",
+			Author:      models.Author{ID: 5, FirstName: "gaurav", LastName: "", Dob: "18-07-2001", PenName: "GCC"},
+			Publication: "NCERT", PublicationDate: "12-08-2011",
+		}, models.Book{}, true, false,
 			nil, nil,
 		},
 	}
-	for _, v := range testcases {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+	mockCtrl := gomock.NewController(t)
 
+	defer mockCtrl.Finish()
+
+	for _, v := range testcases {
 		mockBookStore := datastore.NewMockBook(mockCtrl)
 		mockAuthorStore := datastore.NewMockAuthor(mockCtrl)
 		a := New(mockBookStore, mockAuthorStore)
@@ -391,10 +289,11 @@ func TestDeleteBook(t *testing.T) {
 			"invalid case", 3, 0, true, errors.New("err"),
 		},
 	}
-	for _, v := range testcases {
-		mockCtrl := gomock.NewController(t)
-		defer mockCtrl.Finish()
+	mockCtrl := gomock.NewController(t)
 
+	defer mockCtrl.Finish()
+
+	for _, v := range testcases {
 		mockBookStore := datastore.NewMockBook(mockCtrl)
 		mockAuthorStore := datastore.NewMockAuthor(mockCtrl)
 		a := New(mockBookStore, mockAuthorStore)
