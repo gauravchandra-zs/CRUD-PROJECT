@@ -93,18 +93,18 @@ func (mr *MockBookMockRecorder) DeleteBookByAuthorID(ctx, id interface{}) *gomoc
 }
 
 // GetAllBooks mocks base method.
-func (m *MockBook) GetAllBooks(ctx context.Context, title string) ([]models.Book, error) {
+func (m *MockBook) GetAllBooks(ctx context.Context) ([]models.Book, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllBooks", ctx, title)
+	ret := m.ctrl.Call(m, "GetAllBooks", ctx)
 	ret0, _ := ret[0].([]models.Book)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAllBooks indicates an expected call of GetAllBooks.
-func (mr *MockBookMockRecorder) GetAllBooks(ctx, title interface{}) *gomock.Call {
+func (mr *MockBookMockRecorder) GetAllBooks(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllBooks", reflect.TypeOf((*MockBook)(nil).GetAllBooks), ctx, title)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllBooks", reflect.TypeOf((*MockBook)(nil).GetAllBooks), ctx)
 }
 
 // GetAllBooksByTitle mocks base method.

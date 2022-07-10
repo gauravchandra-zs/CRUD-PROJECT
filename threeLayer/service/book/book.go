@@ -28,12 +28,19 @@ func (s ServiceBook) GetAllBooks(ctx context.Context) ([]models.Book, error) {
 	if !ok {
 		log.Print("includeAuthor is not of type string")
 	}
+	var output []models.Book
+	var err error
 
-	output, err := s.bookStore.GetAllBooks(ctx, title)
+	if title == "" {
+		output, err = s.bookStore.GetAllBooks(ctx)
+	} else {
+		output, err = s.bookStore.GetAllBooksByTitle(ctx, title)
+
+	}
+
 	if err != nil {
 		return output, err
 	}
-
 	for i := 0; i < len(output); i++ {
 		var author models.Author
 
@@ -75,7 +82,6 @@ func (s ServiceBook) PostBook(ctx context.Context, book *models.Book) (int, erro
 
 	id, err := s.bookStore.PostBook(ctx, book)
 	if err != nil {
-		log.Print(err)
 		return 0, err
 	}
 
@@ -87,12 +93,12 @@ func (s ServiceBook) DeleteBook(ctx context.Context, id int) (int, error) {
 		return 0, errors.New("book not exist")
 	}
 
-	rowEffected, err := s.bookStore.DeleteBook(ctx, id)
+	rowDeleted, err := s.bookStore.DeleteBook(ctx, id)
 	if err != nil {
-		return rowEffected, errors.New("unsuccessful deletion")
+		return rowDeleted, errors.New("unsuccessful deletion")
 	}
 
-	return rowEffected, nil
+	return rowDeleted, nil
 }
 
 func (s ServiceBook) PutBook(ctx context.Context, id int, book *models.Book) (models.Book, error) {
@@ -110,12 +116,12 @@ func (s ServiceBook) PutBook(ctx context.Context, id int, book *models.Book) (mo
 	book.Author = author
 
 	if !s.bookStore.CheckBookBid(ctx, id) {
-		return output, err
+		return models.Book{}, err
 	}
 
 	output, err = s.bookStore.PutBook(ctx, id, book)
 	if err != nil {
-		return output, err
+		return models.Book{}, err
 	}
 
 	return output, nil
