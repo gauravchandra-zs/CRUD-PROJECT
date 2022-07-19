@@ -29,7 +29,7 @@ func TestServiceAuthor_PostAuthor(t *testing.T) {
 			}, 1, false, nil,
 		},
 		{
-			"invalid case", models.Author{
+			"invalid case author exist", models.Author{
 				FirstName: "xyz",
 				LastName:  "chandra",
 				Dob:       "18-07-2001",
@@ -37,7 +37,7 @@ func TestServiceAuthor_PostAuthor(t *testing.T) {
 			}, 0, true, nil,
 		},
 		{
-			"invalid case", models.Author{
+			"invalid case error from store layer", models.Author{
 				FirstName: "gaurav",
 				LastName:  "chandra",
 				Dob:       "18-07-2001",
@@ -91,7 +91,7 @@ func TestServiceAuthor_PutAuthor(t *testing.T) {
 		},
 
 		{
-			"invalid id", 2, models.Author{
+			"invalid id author not exist", 2, models.Author{
 				ID:        2,
 				FirstName: "gaurav",
 				LastName:  "chandra",
@@ -100,7 +100,7 @@ func TestServiceAuthor_PutAuthor(t *testing.T) {
 			}, models.Author{}, false, nil,
 		},
 		{
-			"invalid", 100, models.Author{
+			"invalid error from store layer", 100, models.Author{
 				ID:        100,
 				FirstName: "gaurav",
 				LastName:  "chaudhari",
@@ -142,13 +142,13 @@ func TestServiceAuthor_DeleteAuthor(t *testing.T) {
 			"valid case", 1, 1, true, nil, nil,
 		},
 		{
-			"invalid case", 2, 0, true, errors.New("err"), nil,
+			"invalid case error from deletBook", 2, 0, true, errors.New("err"), nil,
 		},
 		{
-			"valid case", 5, 0, true, nil, errors.New("err"),
+			"valid case error from deleteAuthor", 5, 0, true, nil, errors.New("err"),
 		},
 		{
-			"valid case", 10, 0, false, nil, nil,
+			"valid case author not exist", 10, 0, false, nil, nil,
 		},
 	}
 	mockCtrl := gomock.NewController(t)

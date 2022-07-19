@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 
+	"developer.zopsmart.com/go/gofr/pkg/gofr"
+
 	"Projects/GoLang-Interns-2022/threeLayer/drivers"
 	"Projects/GoLang-Interns-2022/threeLayer/models"
 )
@@ -18,6 +20,7 @@ func New(db *sql.DB) AuthorStore {
 	}
 }
 
+// PostAuthor create a row new row in author table with given detail if row not exists
 func (a AuthorStore) PostAuthor(ctx context.Context, author models.Author) (int, error) {
 	result, err := a.db.ExecContext(ctx, drivers.InsertIntoAuthor, author.FirstName, author.LastName, author.Dob, author.PenName)
 	if err != nil {
@@ -32,7 +35,8 @@ func (a AuthorStore) PostAuthor(ctx context.Context, author models.Author) (int,
 	return int(id), nil
 }
 
-func (a AuthorStore) PutAuthor(ctx context.Context, id int, author models.Author) (models.Author, error) {
+// PutAuthor update the detail of author row with given id
+func (a AuthorStore) PutAuthor(ctx *gofr.Context, id int, author models.Author) (models.Author, error) {
 	_, err := a.db.ExecContext(ctx, drivers.UpdateAuthor, author.FirstName, author.LastName, author.Dob, author.PenName, id)
 	if err != nil {
 		return models.Author{}, err
@@ -41,6 +45,7 @@ func (a AuthorStore) PutAuthor(ctx context.Context, id int, author models.Author
 	return author, nil
 }
 
+// DeleteAuthor delete author detail associated with given id if exists
 func (a AuthorStore) DeleteAuthor(ctx context.Context, id int) (int, error) {
 	res, err := a.db.ExecContext(ctx, drivers.DeleteAuthorQuery, id)
 	if err != nil {
@@ -55,7 +60,8 @@ func (a AuthorStore) DeleteAuthor(ctx context.Context, id int) (int, error) {
 	return int(deleteID), nil
 }
 
-func (a AuthorStore) GetAuthorByID(ctx context.Context, id int) (models.Author, error) {
+// GetAuthorByID fetch and return author detail with given id
+func (a AuthorStore) GetAuthorByID(ctx *gofr.Context, id int) (models.Author, error) {
 	resAuthor, err := a.db.QueryContext(ctx, drivers.SelectAuthorByID, id)
 	if err != nil {
 		return models.Author{}, err
@@ -73,6 +79,7 @@ func (a AuthorStore) GetAuthorByID(ctx context.Context, id int) (models.Author, 
 	return author, nil
 }
 
+// CheckAuthor  check author exist or not with author detail  and return bool value
 func (a AuthorStore) CheckAuthor(ctx context.Context, author models.Author) bool {
 	row, err := a.db.QueryContext(ctx, drivers.CheckAuthor, author.FirstName, author.LastName, author.Dob, author.PenName)
 	if err != nil || !row.Next() {
@@ -82,6 +89,7 @@ func (a AuthorStore) CheckAuthor(ctx context.Context, author models.Author) bool
 	return true
 }
 
+// CheckAuthorByID check author exist or not with given id
 func (a AuthorStore) CheckAuthorByID(ctx context.Context, id int) bool {
 	res, err := a.db.QueryContext(ctx, drivers.CheckAuthorBYID, id)
 	if err != nil || !res.Next() {

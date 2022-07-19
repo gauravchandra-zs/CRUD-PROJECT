@@ -7,3 +7,10 @@ type Book struct {
 	Publication     string `json:",omitempty"`
 	PublicationDate string `json:",omitempty"`
 }
+
+type contextKey string
+
+const (
+	Title         contextKey = "title"
+	IncludeAuthor contextKey = "includeAuthor"
+)

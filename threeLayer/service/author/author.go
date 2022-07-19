@@ -17,6 +17,7 @@ func New(author datastore.Author, book datastore.Book) ServiceAuthor {
 	return ServiceAuthor{author, book}
 }
 
+// PostAuthor validate author detail and call for postAuthor to store layer
 func (s ServiceAuthor) PostAuthor(ctx context.Context, author models.Author) (int, error) {
 	if s.authorStore.CheckAuthor(ctx, author) {
 		return 0, errors.New("author exist")
@@ -30,6 +31,7 @@ func (s ServiceAuthor) PostAuthor(ctx context.Context, author models.Author) (in
 	return insertedID, nil
 }
 
+// PutAuthor  check author exist or not and call PutAuthor on store layer to update author
 func (s ServiceAuthor) PutAuthor(ctx context.Context, id int, author models.Author) (models.Author, error) {
 	if !s.authorStore.CheckAuthorByID(ctx, id) {
 		return models.Author{}, errors.New("author not exist")
@@ -43,6 +45,7 @@ func (s ServiceAuthor) PutAuthor(ctx context.Context, id int, author models.Auth
 	return output, nil
 }
 
+// DeleteAuthor check author exist or not and call DeleteAuthor on store layer to delete author
 func (s ServiceAuthor) DeleteAuthor(ctx context.Context, id int) (int, error) {
 	if !s.authorStore.CheckAuthorByID(ctx, id) {
 		return 0, errors.New("author not exist")

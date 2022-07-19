@@ -21,16 +21,11 @@ func New(author service.Author) HandlerAuthor {
 	return HandlerAuthor{author}
 }
 
+// PostAuthor extract and validate author detail from request  and call PostAuthor service layer to post detail
 func (h HandlerAuthor) PostAuthor(w http.ResponseWriter, req *http.Request) {
-	body, err := io.ReadAll(req.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
 	var author models.Author
 
-	err = json.Unmarshal(body, &author)
+	err := UnMarshal(req, &author)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -52,6 +47,7 @@ func (h HandlerAuthor) PostAuthor(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// PutAuthor extract and validate author detail from request and call PutAuthor service layer to update detail
 func (h HandlerAuthor) PutAuthor(w http.ResponseWriter, req *http.Request) {
 	var author models.Author
 
@@ -63,9 +59,7 @@ func (h HandlerAuthor) PutAuthor(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	body, _ := io.ReadAll(req.Body)
-
-	err = json.Unmarshal(body, &author)
+	err = UnMarshal(req, &author)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -84,20 +78,13 @@ func (h HandlerAuthor) PutAuthor(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	body, err = json.Marshal(author)
+	err = Marshal(w, author)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		return
-	}
-
-	w.WriteHeader(http.StatusAccepted)
-
-	_, err = w.Write(body)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
+// DeleteAuthor extract id and validate id and call DeleteAuthor on service layer
 func (h HandlerAuthor) DeleteAuthor(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 
@@ -124,4 +111,34 @@ func ValidateAuthor(author models.Author) bool {
 	}
 
 	return true
+}
+
+func Marshal(w http.ResponseWriter, data interface{}) error {
+	body, err := json.Marshal(data)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return err
+	}
+
+	_, err = w.Write(body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+
+	return nil
+}
+
+func UnMarshal(req *http.Request, object interface{}) error {
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(body, &object)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

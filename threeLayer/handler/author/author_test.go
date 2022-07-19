@@ -37,7 +37,7 @@ func TestPostAuthor(t *testing.T) {
 			}, http.StatusCreated, nil,
 		},
 		{
-			"invalid case", models.Author{
+			"invalid author detail", models.Author{
 				FirstName: "",
 				LastName:  "chandra",
 				Dob:       "18-07-2001",
@@ -45,10 +45,10 @@ func TestPostAuthor(t *testing.T) {
 			}, http.StatusBadRequest, nil,
 		},
 		{
-			"invalid case", "hhds", http.StatusBadRequest, nil,
+			"invalid body", "hhds", http.StatusBadRequest, nil,
 		},
 		{
-			"invalid case", models.Author{
+			"error from service layer", models.Author{
 				FirstName: "gaurav",
 				LastName:  "chandra",
 				Dob:       "18-07-2001",
@@ -107,7 +107,7 @@ func TestPutAuthor(t *testing.T) {
 			}, http.StatusCreated, nil,
 		},
 		{
-			"invalid case", "1", models.Author{
+			"invalid author detail", "1", models.Author{
 				FirstName: "",
 				LastName:  "chandra",
 				Dob:       "18-07-2001",
@@ -115,11 +115,11 @@ func TestPutAuthor(t *testing.T) {
 			}, models.Author{}, http.StatusBadRequest, nil,
 		},
 		{
-			"invalid case", "2", "author",
+			"invalid body type not Author", "2", "author",
 			models.Author{}, http.StatusBadRequest, nil,
 		},
 		{
-			"valid case", "1", models.Author{
+			"invalid case error from service layer", "1", models.Author{
 				ID:        1,
 				FirstName: "gaurav",
 				LastName:  "chandra",
@@ -129,7 +129,7 @@ func TestPutAuthor(t *testing.T) {
 			http.StatusBadRequest, errors.New("err"),
 		},
 		{
-			"invalid case", "-2", "author",
+			"invalid case id negative ", "-2", "author",
 			models.Author{}, http.StatusBadRequest, nil,
 		},
 	}
@@ -185,10 +185,10 @@ func TestDeleteAuthor(t *testing.T) {
 			"valid case", "1", http.StatusNoContent, nil,
 		},
 		{
-			"invalid case", "100", http.StatusBadRequest, errors.New("err"),
+			"invalid case error from service layer", "100", http.StatusBadRequest, errors.New("err"),
 		},
 		{
-			"invalid case", "-1", http.StatusBadRequest, nil,
+			"invalid case negative id", "-1", http.StatusBadRequest, nil,
 		},
 	}
 	mockCtrl := gomock.NewController(t)

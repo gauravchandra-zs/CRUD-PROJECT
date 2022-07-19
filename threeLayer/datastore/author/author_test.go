@@ -93,7 +93,7 @@ func TestAuthorStore_PostAuthor(t *testing.T) {
 			}, 1, sqlmock.NewResult(1, 1), nil,
 		},
 		{
-			"invalid case", models.Author{
+			"invalid case error from post query", models.Author{
 				FirstName: "gaurav",
 				LastName:  "chaudhari",
 				Dob:       "18-07-2001",
@@ -101,7 +101,7 @@ func TestAuthorStore_PostAuthor(t *testing.T) {
 			}, 0, sqlmock.NewResult(0, 0), errors.New("error"),
 		},
 		{
-			"invalid case", models.Author{
+			"invalid case error from scan", models.Author{
 				FirstName: "gaurav",
 				LastName:  "chaudhari",
 				Dob:       "18-07-2001",
@@ -138,11 +138,11 @@ func TestAuthorStore_DeleteAuthor(t *testing.T) {
 			1, nil, sqlmock.NewResult(0, 1),
 		},
 		{
-			"invalid case", -1,
+			"invalid case negative id", -1,
 			0, nil, sqlmock.NewErrorResult(errors.New("err")),
 		},
 		{
-			"invalid case", -1,
+			"invalid case error in delete query", -1,
 			0, errors.New("err"), sqlmock.NewResult(0, 0),
 		},
 	}
@@ -180,17 +180,17 @@ func TestAuthorStore_GetAuthorByID(t *testing.T) {
 				"penName"}).AddRow(1, "RD", "sharma", "07-10-1998", "GCC"), nil,
 		},
 		{
-			"invalid case", 23,
+			"invalid case author not present", 23,
 			models.Author{}, sqlmock.NewRows([]string{"authorID", "firstName",
 				"lastName", "dob", "penName"}), nil,
 		},
 		{
-			"invalid case", 50,
+			"invalid case error in query Get", 50,
 			models.Author{}, sqlmock.NewRows([]string{"authorID", "firstName",
 				"lastName", "dob", "penName"}), errors.New("err"),
 		},
 		{
-			"invalid case", 1, models.Author{},
+			"invalid case error in scaninng result", 1, models.Author{},
 			sqlmock.NewRows([]string{"authorID", "firstName", "lastName", "dob",
 				"penName"}).AddRow("id", "RD", "sharma", "07-10-1998", "GCC"), nil,
 		},
@@ -226,7 +226,7 @@ func TestAuthorStore_CheckAuthor(t *testing.T) {
 			}, sqlmock.NewRows([]string{"authorID"}).AddRow(1), nil, true,
 		},
 		{
-			"invalid case", models.Author{
+			"invalid case error form check query execution", models.Author{
 				FirstName: "gaurav",
 				LastName:  "chaudhari",
 				Dob:       "18-07-2001",
@@ -263,7 +263,7 @@ func TestAuthorStore_CheckAuthorByID(t *testing.T) {
 			sqlmock.NewRows([]string{"authorID"}).AddRow(1), nil, true,
 		},
 		{
-			"invalid case", 2,
+			"invalid case error from check query execution", 2,
 			sqlmock.NewRows([]string{"authorID"}), errors.New("error"), false,
 		},
 	}

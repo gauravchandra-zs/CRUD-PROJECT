@@ -30,27 +30,27 @@ func TestPostBook(t *testing.T) {
 		{"valid case", models.Book{Title: "RD sharma", Author: models.Author{FirstName: "gaurav", LastName: "chandra",
 			Dob: "18-07-2001", PenName: "GCC"}, Publication: "Arihanth", PublicationDate: "12-08-2011",
 		}, http.StatusCreated, nil},
-		{"invalid case", models.Book{Title: "", Author: models.Author{FirstName: "gaurav", LastName: "chandra",
+		{"invalid book detail", models.Book{Title: "", Author: models.Author{FirstName: "gaurav", LastName: "chandra",
 			Dob: "18-07-2001", PenName: "GCC"}, Publication: "NCERT", PublicationDate: "12-08-2011"}, http.StatusBadRequest, nil},
-		{"invalid case", "Book", http.StatusInternalServerError, nil},
-		{"invalid case", models.Book{Title: "RD sharma", Author: models.Author{FirstName: "gaurav",
+		{"invalid body type", "Book", http.StatusInternalServerError, nil},
+		{"invalid case error from service layer", models.Book{Title: "RD sharma", Author: models.Author{FirstName: "gaurav",
 			LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"}, Publication: "Arihanth",
 			PublicationDate: "12-08-2011"}, http.StatusBadRequest, errors.New("err")},
-		{"invalid case", models.Book{Title: "RD sharma", Author: models.Author{FirstName: "gaurav",
+		{"invalid case publication not allowed", models.Book{Title: "RD sharma", Author: models.Author{FirstName: "gaurav",
 			LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"},
 			Publication: "XYZ", PublicationDate: "12-08-2011"}, http.StatusBadRequest, nil,
 		},
-		{"invalid case", models.Book{Title: "RD sharma", Author: models.Author{FirstName: "gaurav",
+		{"invalid publication case", models.Book{Title: "RD sharma", Author: models.Author{FirstName: "gaurav",
 			LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"},
 			Publication:     "Arihanth",
 			PublicationDate: "2000"}, http.StatusBadRequest, nil,
 		},
-		{"invalid case", models.Book{Title: "RD sharma", Author: models.Author{FirstName: "gaurav",
+		{"invalid invalid publicationDate", models.Book{Title: "RD sharma", Author: models.Author{FirstName: "gaurav",
 			LastName: "chandra", Dob: "18-07-2001", PenName: "GCC"},
 			Publication:     "Arihanth",
 			PublicationDate: "18-07-2023"}, http.StatusBadRequest, nil,
 		},
-		{"invalid case", models.Book{Title: "", Author: models.Author{FirstName: "gaurav", LastName: "chandra",
+		{"invalid book title", models.Book{Title: "", Author: models.Author{FirstName: "gaurav", LastName: "chandra",
 			Dob: "18-07-2001", PenName: "GCC"},
 			Publication:     "Arihanth",
 			PublicationDate: "18-07-2000"}, http.StatusBadRequest, nil,
@@ -95,10 +95,10 @@ func TestDeleteBook(t *testing.T) {
 			"valid case", "1", http.StatusNoContent, nil,
 		},
 		{
-			"valid case", "2", http.StatusBadRequest, errors.New("err"),
+			"invalid case error from service layer", "2", http.StatusBadRequest, errors.New("err"),
 		},
 		{
-			"valid case", "-1", http.StatusBadRequest, nil,
+			"invalid case negative id", "-1", http.StatusBadRequest, nil,
 		},
 	}
 	mockCtrl := gomock.NewController(t)
@@ -139,7 +139,7 @@ func TestGetAllBooks(t *testing.T) {
 			},
 		}, nil,
 		},
-		{"invalid case", []models.Book{}, errors.New("err")},
+		{"invalid case error from service layer", []models.Book{}, errors.New("err")},
 	}
 	mockCtrl := gomock.NewController(t)
 
@@ -152,8 +152,8 @@ func TestGetAllBooks(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, "title", "")
-		ctx = context.WithValue(ctx, "includeAuthor", "")
+		ctx = context.WithValue(ctx, models.Title, "")
+		ctx = context.WithValue(ctx, models.IncludeAuthor, "")
 
 		mockServiceBook.EXPECT().GetAllBooks(ctx).Return(v.expectedOutput, v.err).AnyTimes()
 
@@ -200,9 +200,9 @@ func TestGetBookByID(t *testing.T) {
 			PublicationDate: "12-08-2011",
 		}, http.StatusOK, nil,
 		},
-		{"invalid case", "-1", models.Book{},
+		{"invalid case negative id", "-1", models.Book{},
 			http.StatusBadRequest, nil},
-		{"invalid case", "2", models.Book{},
+		{"invalid case error from service layer", "2", models.Book{},
 			http.StatusBadRequest, errors.New("err")},
 	}
 	mockCtrl := gomock.NewController(t)

@@ -8,6 +8,9 @@ import (
 	"strconv"
 	"strings"
 
+	"developer.zopsmart.com/go/gofr/pkg/errors"
+	"developer.zopsmart.com/go/gofr/pkg/gofr"
+
 	"Projects/GoLang-Interns-2022/threeLayer/models"
 	"Projects/GoLang-Interns-2022/threeLayer/service"
 
@@ -24,133 +27,81 @@ func New(b service.Book) HandlerBook {
 	}
 }
 
-type Title string
-type IncludeAuthor string
-
-func (h HandlerBook) GetAllBooks(w http.ResponseWriter, req *http.Request) {
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, "title", req.URL.Query().Get("title"))
-	ctx = context.WithValue(ctx, "includeAuthor", req.URL.Query().Get("includeAuthor"))
-
+// GetAllBooks  extract params from request and call GetAllBooks on  service layer to get all books
+func (h HandlerBook) GetAllBooks(ctx *gofr.Context) (interface{}, error) {
 	output, err := h.serviceBook.GetAllBooks(ctx)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return output, err
 	}
 
-	body, err := json.Marshal(output)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	_, err = w.Write(body)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	return output, nil
 }
 
-func (h HandlerBook) GetBookByID(w http.ResponseWriter, req *http.Request) {
-	params := mux.Vars(req)
+// GetBookByID extract id and validate id  from request and call GetBookByID on service layer to get book detail
+func (h HandlerBook) GetBookByID(ctx *gofr.Context) (interface{}, error) {
+	id, err := strconv.Atoi(ctx.PathParam("id"))
 
-	id, err := strconv.Atoi(params["id"])
 	if err != nil || id <= 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		params := []string{ctx.Param("id")}
+		return nil, errors.InvalidParam{Param: params}
 	}
 
 	var output models.Book
 
-	ctx := context.Background()
-
 	output, err = h.serviceBook.GetBookByID(ctx, id)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, errors.EntityNotFound{}
 	}
 
-	err = marshal(w, &output)
-	if err != nil {
-		return
-	}
+	return output, nil
 }
 
-func (h HandlerBook) PostBook(w http.ResponseWriter, req *http.Request) {
+// PostBook extract and validate book detail from request and call PostBook on service layer to post book
+func (h HandlerBook) PostBook(ctx *gofr.Context) (interface{}, error) {
 	var book models.Book
-
-	body, err := io.ReadAll(req.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	err = json.Unmarshal(body, &book)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	if err := ctx.Bind(&book); err != nil {
+		return nil, err
 	}
 
 	if !validateBook(&book) {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, errors.ForbiddenRequest{}
 	}
 
-	ctx := context.Background()
-
-	_, err = h.serviceBook.PostBook(ctx, &book)
+	_, err := h.serviceBook.PostBook(ctx, &book)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, errors.ForbiddenRequest{}
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	return book, nil
 }
 
-func (h HandlerBook) PutBook(w http.ResponseWriter, req *http.Request) {
-	params := mux.Vars(req)
-
-	id, err := strconv.Atoi(params["id"])
+// PutBook extract and validate book detail from request and call PUtBook on service layer to update book
+func (h HandlerBook) PutBook(ctx *gofr.Context) (interface{}, error) {
+	id, err := strconv.Atoi(ctx.PathParam("id"))
 	if err != nil || id <= 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, errors.InvalidParam{}
 	}
 
 	var book models.Book
 
-	body, err := io.ReadAll(req.Body)
+	err = ctx.Bind(&book)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	err = json.Unmarshal(body, &book)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, errors.ForbiddenRequest{}
 	}
 
 	if !validateBook(&book) || !validateAuthor(book.Author) {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, errors.ForbiddenRequest{}
 	}
-
-	ctx := context.Background()
 
 	newData, err := h.serviceBook.PutBook(ctx, id, &book)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, err
 	}
 
-	err = marshal(w, &newData)
-	if err != nil {
-		return
-	}
-
-	w.WriteHeader(http.StatusAccepted)
+	return newData, nil
 }
 
+// DeleteBook extract and validate book id  from request and call DeleteBook on service layer to delete Book
 func (h HandlerBook) DeleteBook(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 
@@ -171,6 +122,7 @@ func (h HandlerBook) DeleteBook(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// validateBook validate book detail
 func validateBook(b *models.Book) bool {
 	slc := strings.Split(b.PublicationDate, "-")
 	sz := 3
@@ -189,6 +141,7 @@ func validateBook(b *models.Book) bool {
 	}
 }
 
+// validateAuthor validate author
 func validateAuthor(author models.Author) bool {
 	if author.FirstName == "" || author.LastName == "" || author.Dob == "" || author.PenName == "" {
 		return false
@@ -197,8 +150,8 @@ func validateAuthor(author models.Author) bool {
 	return true
 }
 
-func marshal(w http.ResponseWriter, book *models.Book) error {
-	body, err := json.Marshal(book)
+func marshal(w http.ResponseWriter, data interface{}) error {
+	body, err := json.Marshal(data)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return err
@@ -207,6 +160,20 @@ func marshal(w http.ResponseWriter, book *models.Book) error {
 	_, err = w.Write(body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+
+	return nil
+}
+
+func unMarshal(req *http.Request, object interface{}) error {
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(body, &object)
+	if err != nil {
 		return err
 	}
 

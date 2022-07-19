@@ -37,7 +37,7 @@ func TestGetAllBooks(t *testing.T) {
 			}, errors.New("author not exist"),
 		},
 		{
-			"valid case", map[string]any{
+			"invalid case", map[string]any{
 				"title": 1, "includeAuthor": true}, []models.Book{
 				{
 					ID:          1,
@@ -54,7 +54,7 @@ func TestGetAllBooks(t *testing.T) {
 			}, nil,
 		},
 		{
-			"valid case", map[string]any{
+			"invalid case error from GetAllBook", map[string]any{
 				"title": "xyz", "includeAuthor": "true"}, []models.Book{},
 			errors.New("book not exists"),
 		},
@@ -73,11 +73,9 @@ func TestGetAllBooks(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	for _, v := range testcases {
-		title := Title("Title")
-		includeAuthor := IncludeAuthor("IncludeAuthor")
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, title, v.params["title"])
-		ctx = context.WithValue(ctx, includeAuthor, v.params["includeAuthor"])
+		ctx = context.WithValue(ctx, models.Title, v.params["title"])
+		ctx = context.WithValue(ctx, models.IncludeAuthor, v.params["includeAuthor"])
 
 		mockBookStore := datastore.NewMockBook(mockCtrl)
 		mockAuthorStore := datastore.NewMockAuthor(mockCtrl)
@@ -119,21 +117,13 @@ func TestGetBookByID(t *testing.T) {
 			}, nil, nil,
 		},
 		{
-			"invalid case", 100, models.Book{}, errors.New("book not exist"), nil,
+			"invalid case error from getBook", 100, models.Book{},
+			errors.New("book not exist"), nil,
 		},
 		{
-			"invalid case", 2, models.Book{
-				ID:    1,
-				Title: "RD sharma",
-				Author: models.Author{
-					ID:        1,
-					FirstName: "gaurav",
-					LastName:  "chandra",
-					Dob:       "18-07-2001",
-					PenName:   "GCC",
-				},
-				Publication:     "Arihanth",
-				PublicationDate: "12-08-2011"}, nil, errors.New("author not exist"),
+			"invalid case error from getAuthor", 2, models.Book{ID: 1, Author: models.Author{
+				ID: 1,
+			}}, nil, errors.New("author not exist"),
 		},
 	}
 	mockCtrl := gomock.NewController(t)
@@ -178,7 +168,7 @@ func TestPostBook(t *testing.T) {
 			Publication: "Penguin", PublicationDate: "12-08-2011",
 		}, 0, true, false, nil,
 		},
-		{"invalid case", models.Book{Title: "xyz",
+		{"invalid case error from store layer", models.Book{Title: "xyz",
 			Author:      models.Author{FirstName: "gaurav", LastName: "chaudhari", Dob: "18-07-2001", PenName: "GCC"},
 			Publication: "NCERT", PublicationDate: "12-08-2011",
 		}, 0, false, true, errors.New("err"),
@@ -224,24 +214,24 @@ func TestPutBook(t *testing.T) {
 			Publication: "Arihanth", PublicationDate: "12-08-2011",
 		}, true, true, nil, nil,
 		},
-		{"invalid case", models.Book{ID: 2, Title: "",
+		{"invalid book title", models.Book{ID: 2, Title: "",
 			Author:      models.Author{ID: 2, FirstName: "gaurav", LastName: "", Dob: "18-07-2001", PenName: "GCC"},
 			Publication: "NCERT", PublicationDate: "12-08-2011",
 		}, models.Book{}, false, true, nil, nil,
 		},
-		{"invalid case", models.Book{ID: 3, Title: "",
+		{"invalid case error from store layer put author", models.Book{ID: 3, Title: "",
 			Author:      models.Author{ID: 3, FirstName: "gaurav", LastName: "", Dob: "18-07-2001", PenName: "GCC"},
 			Publication: "NCERT", PublicationDate: "12-08-2011",
 		}, models.Book{}, true, true,
 			errors.New("err"), nil,
 		},
-		{"invalid case", models.Book{ID: 4, Title: "",
+		{"invalid case error from store layer put book", models.Book{ID: 4, Title: "",
 			Author:      models.Author{ID: 4, FirstName: "gaurav", LastName: "", Dob: "18-07-2001", PenName: "GCC"},
 			Publication: "NCERT", PublicationDate: "12-08-2011",
 		}, models.Book{}, true, true,
 			nil, errors.New("err"),
 		},
-		{"invalid case", models.Book{ID: 5, Title: "",
+		{"invalid case book not exist", models.Book{ID: 5, Title: "",
 			Author:      models.Author{ID: 5, FirstName: "gaurav", LastName: "", Dob: "18-07-2001", PenName: "GCC"},
 			Publication: "NCERT", PublicationDate: "12-08-2011",
 		}, models.Book{}, true, false,
@@ -283,10 +273,10 @@ func TestDeleteBook(t *testing.T) {
 			"valid case", 1, 1, true, nil,
 		},
 		{
-			"invalid case", 2, 0, false, nil,
+			"invalid case book not exist", 2, 0, false, nil,
 		},
 		{
-			"invalid case", 3, 0, true, errors.New("err"),
+			"invalid case error form store layer deleteBook", 3, 0, true, errors.New("err"),
 		},
 	}
 	mockCtrl := gomock.NewController(t)

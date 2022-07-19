@@ -2,7 +2,9 @@ package servicebook
 
 import (
 	"context"
-	"errors"
+
+	"developer.zopsmart.com/go/gofr/pkg/errors"
+	"developer.zopsmart.com/go/gofr/pkg/gofr"
 
 	"Projects/GoLang-Interns-2022/threeLayer/datastore"
 	"Projects/GoLang-Interns-2022/threeLayer/models"
@@ -17,12 +19,10 @@ func New(bookStore datastore.Book, author datastore.Author) ServiceBook {
 	return ServiceBook{bookStore, author}
 }
 
-type Title string
-type IncludeAuthor string
-
-func (s ServiceBook) GetAllBooks(ctx context.Context) ([]models.Book, error) {
-	title, _ := ctx.Value("title").(string)
-	includeAuthor, _ := ctx.Value("includeAuthor").(string)
+// GetAllBooks call GetAllBooks and GetAllBooksByTitle of store layer to get all details
+func (s ServiceBook) GetAllBooks(ctx *gofr.Context) ([]models.Book, error) {
+	title := ctx.Param(string(models.Title))
+	includeAuthor := ctx.Param(string(models.IncludeAuthor))
 
 	var output []models.Book
 
@@ -54,7 +54,8 @@ func (s ServiceBook) GetAllBooks(ctx context.Context) ([]models.Book, error) {
 	return output, nil
 }
 
-func (s ServiceBook) GetBookByID(ctx context.Context, id int) (models.Book, error) {
+// GetBookByID check book exist with given id and call GetBookByID on store layer to get Book detail
+func (s ServiceBook) GetBookByID(ctx *gofr.Context, id int) (models.Book, error) {
 	var output models.Book
 
 	var err error
@@ -72,9 +73,10 @@ func (s ServiceBook) GetBookByID(ctx context.Context, id int) (models.Book, erro
 	return output, nil
 }
 
-func (s ServiceBook) PostBook(ctx context.Context, book *models.Book) (int, error) {
+// PostBook validate book and author detail and call PostBook on store layer to post book
+func (s ServiceBook) PostBook(ctx *gofr.Context, book *models.Book) (int, error) {
 	if s.bookStore.CheckBook(ctx, book) || !s.authorStore.CheckAuthorByID(ctx, book.Author.ID) {
-		return 0, errors.New("book exist already")
+		return 0, errors.EntityAlreadyExists{}
 	}
 
 	id, err := s.bookStore.PostBook(ctx, book)
@@ -85,24 +87,26 @@ func (s ServiceBook) PostBook(ctx context.Context, book *models.Book) (int, erro
 	return id, nil
 }
 
+// DeleteBook check book exist with given id and call DeleteBook on store layer to delete book
 func (s ServiceBook) DeleteBook(ctx context.Context, id int) (int, error) {
 	if !s.bookStore.CheckBookBid(ctx, id) {
-		return 0, errors.New("book not exist")
+		return 0, errors.EntityNotFound{}
 	}
 
 	rowDeleted, err := s.bookStore.DeleteBook(ctx, id)
 	if err != nil {
-		return rowDeleted, errors.New("unsuccessful deletion")
+		return rowDeleted, err
 	}
 
 	return rowDeleted, nil
 }
 
-func (s ServiceBook) PutBook(ctx context.Context, id int, book *models.Book) (models.Book, error) {
+// PutBook validate author and book detail and call PutAuthor on store layer to update book detail
+func (s ServiceBook) PutBook(ctx *gofr.Context, id int, book *models.Book) (models.Book, error) {
 	var output models.Book
 
 	if !s.authorStore.CheckAuthorByID(ctx, book.Author.ID) || !s.bookStore.CheckBookBid(ctx, id) {
-		return models.Book{}, errors.New("book or author not present")
+		return models.Book{}, errors.EntityNotFound{}
 	}
 
 	author, err := s.authorStore.PutAuthor(ctx, book.Author.ID, book.Author)
