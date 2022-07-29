@@ -1,8 +1,6 @@
 package servicebook
 
 import (
-	"context"
-
 	"developer.zopsmart.com/go/gofr/pkg/errors"
 	"developer.zopsmart.com/go/gofr/pkg/gofr"
 
@@ -88,17 +86,12 @@ func (s ServiceBook) PostBook(ctx *gofr.Context, book *models.Book) (int, error)
 }
 
 // DeleteBook check book exist with given id and call DeleteBook on store layer to delete book
-func (s ServiceBook) DeleteBook(ctx context.Context, id int) (int, error) {
+func (s ServiceBook) DeleteBook(ctx *gofr.Context, id int) (int, error) {
 	if !s.bookStore.CheckBookBid(ctx, id) {
 		return 0, errors.EntityNotFound{}
 	}
 
-	rowDeleted, err := s.bookStore.DeleteBook(ctx, id)
-	if err != nil {
-		return rowDeleted, err
-	}
-
-	return rowDeleted, nil
+	return s.bookStore.DeleteBook(ctx, id)
 }
 
 // PutBook validate author and book detail and call PutAuthor on store layer to update book detail

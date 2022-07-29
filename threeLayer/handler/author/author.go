@@ -1,16 +1,13 @@
 package handlerauthor
 
 import (
-	"context"
-	"encoding/json"
-	"io"
-	"net/http"
 	"strconv"
+
+	"developer.zopsmart.com/go/gofr/pkg/errors"
+	"developer.zopsmart.com/go/gofr/pkg/gofr"
 
 	"Projects/GoLang-Interns-2022/threeLayer/models"
 	"Projects/GoLang-Interns-2022/threeLayer/service"
-
-	"github.com/gorilla/mux"
 )
 
 type HandlerAuthor struct {
@@ -22,87 +19,55 @@ func New(author service.Author) HandlerAuthor {
 }
 
 // PostAuthor extract and validate author detail from request  and call PostAuthor service layer to post detail
-func (h HandlerAuthor) PostAuthor(w http.ResponseWriter, req *http.Request) {
+func (h HandlerAuthor) PostAuthor(ctx *gofr.Context) (interface{}, error) {
 	var author models.Author
 
-	err := UnMarshal(req, &author)
+	err := ctx.Bind(&author)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, err
 	}
 
 	if !ValidateAuthor(author) {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, errors.ForbiddenRequest{}
 	}
 
-	ctx := context.Background()
+	return h.serviceAuthor.PostAuthor(ctx, author)
 
-	_, err = h.serviceAuthor.PostAuthor(ctx, author)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
 }
 
 // PutAuthor extract and validate author detail from request and call PutAuthor service layer to update detail
-func (h HandlerAuthor) PutAuthor(w http.ResponseWriter, req *http.Request) {
+func (h HandlerAuthor) PutAuthor(ctx *gofr.Context) (interface{}, error) {
 	var author models.Author
 
-	params := mux.Vars(req)
+	id, err := strconv.Atoi(ctx.PathParam("id"))
 
-	id, err := strconv.Atoi(params["id"])
 	if err != nil || id <= 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		params := []string{ctx.Param("id")}
+		return nil, errors.InvalidParam{Param: params}
 	}
 
-	err = UnMarshal(req, &author)
+	err = ctx.Bind(&author)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, err
 	}
 
 	if !ValidateAuthor(author) {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, errors.ForbiddenRequest{}
 	}
 
-	ctx := context.Background()
-
-	author, err = h.serviceAuthor.PutAuthor(ctx, id, author)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	err = Marshal(w, author)
-	if err != nil {
-		return
-	}
+	return h.serviceAuthor.PutAuthor(ctx, id, author)
 }
 
 // DeleteAuthor extract id and validate id and call DeleteAuthor on service layer
-func (h HandlerAuthor) DeleteAuthor(w http.ResponseWriter, req *http.Request) {
-	params := mux.Vars(req)
+func (h HandlerAuthor) DeleteAuthor(ctx *gofr.Context) (interface{}, error) {
+	id, err := strconv.Atoi(ctx.PathParam("id"))
 
-	id, err := strconv.Atoi(params["id"])
 	if err != nil || id <= 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		params := []string{ctx.Param("id")}
+		return nil, errors.InvalidParam{Param: params}
 	}
 
-	ctx := context.Background()
-
-	_, err = h.serviceAuthor.DeleteAuthor(ctx, id)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
+	return h.serviceAuthor.DeleteAuthor(ctx, id)
 }
 
 func ValidateAuthor(author models.Author) bool {
@@ -111,34 +76,4 @@ func ValidateAuthor(author models.Author) bool {
 	}
 
 	return true
-}
-
-func Marshal(w http.ResponseWriter, data interface{}) error {
-	body, err := json.Marshal(data)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
-	}
-
-	_, err = w.Write(body)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
-	}
-
-	return nil
-}
-
-func UnMarshal(req *http.Request, object interface{}) error {
-	body, err := io.ReadAll(req.Body)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(body, &object)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

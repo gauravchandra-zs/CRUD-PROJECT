@@ -1,10 +1,6 @@
 package handlerbook
 
 import (
-	"context"
-	"encoding/json"
-	"io"
-	"net/http"
 	"strconv"
 	"strings"
 
@@ -13,8 +9,6 @@ import (
 
 	"Projects/GoLang-Interns-2022/threeLayer/models"
 	"Projects/GoLang-Interns-2022/threeLayer/service"
-
-	"github.com/gorilla/mux"
 )
 
 type HandlerBook struct {
@@ -67,12 +61,7 @@ func (h HandlerBook) PostBook(ctx *gofr.Context) (interface{}, error) {
 		return nil, errors.ForbiddenRequest{}
 	}
 
-	_, err := h.serviceBook.PostBook(ctx, &book)
-	if err != nil {
-		return nil, errors.ForbiddenRequest{}
-	}
-
-	return book, nil
+	return h.serviceBook.PostBook(ctx, &book)
 }
 
 // PutBook extract and validate book detail from request and call PUtBook on service layer to update book
@@ -86,40 +75,24 @@ func (h HandlerBook) PutBook(ctx *gofr.Context) (interface{}, error) {
 
 	err = ctx.Bind(&book)
 	if err != nil {
-		return nil, errors.ForbiddenRequest{}
+		return nil, err
 	}
 
 	if !validateBook(&book) || !validateAuthor(book.Author) {
 		return nil, errors.ForbiddenRequest{}
 	}
 
-	newData, err := h.serviceBook.PutBook(ctx, id, &book)
-	if err != nil {
-		return nil, err
-	}
-
-	return newData, nil
+	return h.serviceBook.PutBook(ctx, id, &book)
 }
 
 // DeleteBook extract and validate book id  from request and call DeleteBook on service layer to delete Book
-func (h HandlerBook) DeleteBook(w http.ResponseWriter, req *http.Request) {
-	params := mux.Vars(req)
-
-	id, err := strconv.Atoi(params["id"])
+func (h HandlerBook) DeleteBook(ctx *gofr.Context) (interface{}, error) {
+	id, err := strconv.Atoi(ctx.PathParam("id"))
 	if err != nil || id <= 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, errors.InvalidParam{}
 	}
 
-	ctx := context.Background()
-
-	_, err = h.serviceBook.DeleteBook(ctx, id)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
+	return h.serviceBook.DeleteBook(ctx, id)
 }
 
 // validateBook validate book detail
@@ -150,32 +123,16 @@ func validateAuthor(author models.Author) bool {
 	return true
 }
 
-func marshal(w http.ResponseWriter, data interface{}) error {
-	body, err := json.Marshal(data)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return err
+func SetStatusCode(data interface{}, err error) error {
+	switch err.(type) {
+	case errors.EntityAlreadyExists:
+		return errors.EntityAlreadyExists{}
+	case errors.InvalidParam:
+		return errors.InvalidParam{}
+	case errors.EntityNotFound:
+		return errors.EntityNotFound{}
+	default:
+		return nil
 	}
 
-	_, err = w.Write(body)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
-	}
-
-	return nil
-}
-
-func unMarshal(req *http.Request, object interface{}) error {
-	body, err := io.ReadAll(req.Body)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(body, &object)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

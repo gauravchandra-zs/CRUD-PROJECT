@@ -1,7 +1,6 @@
 package datastoreauthor
 
 import (
-	"context"
 	"database/sql"
 
 	"developer.zopsmart.com/go/gofr/pkg/gofr"
@@ -21,7 +20,7 @@ func New(db *sql.DB) AuthorStore {
 }
 
 // PostAuthor create a row new row in author table with given detail if row not exists
-func (a AuthorStore) PostAuthor(ctx context.Context, author models.Author) (int, error) {
+func (a AuthorStore) PostAuthor(ctx *gofr.Context, author models.Author) (int, error) {
 	result, err := a.db.ExecContext(ctx, drivers.InsertIntoAuthor, author.FirstName, author.LastName, author.Dob, author.PenName)
 	if err != nil {
 		return 0, err
@@ -46,7 +45,7 @@ func (a AuthorStore) PutAuthor(ctx *gofr.Context, id int, author models.Author) 
 }
 
 // DeleteAuthor delete author detail associated with given id if exists
-func (a AuthorStore) DeleteAuthor(ctx context.Context, id int) (int, error) {
+func (a AuthorStore) DeleteAuthor(ctx *gofr.Context, id int) (int, error) {
 	res, err := a.db.ExecContext(ctx, drivers.DeleteAuthorQuery, id)
 	if err != nil {
 		return 0, err
@@ -80,7 +79,7 @@ func (a AuthorStore) GetAuthorByID(ctx *gofr.Context, id int) (models.Author, er
 }
 
 // CheckAuthor  check author exist or not with author detail  and return bool value
-func (a AuthorStore) CheckAuthor(ctx context.Context, author models.Author) bool {
+func (a AuthorStore) CheckAuthor(ctx *gofr.Context, author models.Author) bool {
 	row, err := a.db.QueryContext(ctx, drivers.CheckAuthor, author.FirstName, author.LastName, author.Dob, author.PenName)
 	if err != nil || !row.Next() {
 		return false
@@ -90,7 +89,7 @@ func (a AuthorStore) CheckAuthor(ctx context.Context, author models.Author) bool
 }
 
 // CheckAuthorByID check author exist or not with given id
-func (a AuthorStore) CheckAuthorByID(ctx context.Context, id int) bool {
+func (a AuthorStore) CheckAuthorByID(ctx *gofr.Context, id int) bool {
 	res, err := a.db.QueryContext(ctx, drivers.CheckAuthorBYID, id)
 	if err != nil || !res.Next() {
 		return false
