@@ -6,8 +6,8 @@ import (
 	"developer.zopsmart.com/go/gofr/pkg/errors"
 	"developer.zopsmart.com/go/gofr/pkg/gofr"
 
-	"Projects/GoLang-Interns-2022/threeLayer/models"
-	"Projects/GoLang-Interns-2022/threeLayer/service"
+	"MyProject/CRUD-PROJECT/threeLayer/models"
+	"MyProject/CRUD-PROJECT/threeLayer/service"
 )
 
 type HandlerAuthor struct {

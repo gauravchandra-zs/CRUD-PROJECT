@@ -1,19 +1,15 @@
-module Projects/GoLang-Interns-2022/threeLayer
+module MyProject/CRUD-PROJECT/threeLayer
 
 go 1.18
 
-require github.com/gorilla/mux v1.8.0
-
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.0
+	developer.zopsmart.com/go/gofr v0.2.0
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/golang/mock v1.6.0
 )
 
 require (
 	cloud.google.com/go v0.94.1 // indirect
 	cloud.google.com/go/trace v1.0.0 // indirect
-	developer.zopsmart.com/go/gofr v0.2.0
 	github.com/Azure/azure-amqp-common-go/v3 v3.2.0 // indirect
 	github.com/Azure/azure-event-hubs-go/v3 v3.3.13 // indirect
 	github.com/Azure/azure-sdk-for-go v57.0.0+incompatible // indirect
@@ -54,12 +50,14 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.1.0 // indirect
 	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.1.0 // indirect
 	github.com/gookit/color v1.4.2 // indirect
+	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect

@@ -3,7 +3,7 @@ package service
 import (
 	"developer.zopsmart.com/go/gofr/pkg/gofr"
 
-	"Projects/GoLang-Interns-2022/threeLayer/models"
+	"MyProject/CRUD-PROJECT/threeLayer/models"
 )
 
 type Book interface {

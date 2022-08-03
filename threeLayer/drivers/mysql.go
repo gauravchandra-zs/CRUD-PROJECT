@@ -7,9 +7,9 @@ import (
 const (
 	Driver = "mysql"
 
-	//	DataSource = "root:@Gc18072001@/test"
+	DataSource = "root:@Gc18072001@/test"
 
-	DataSource = "root:gaurav@tcp(localhost:1000)/test"
+	//DataSource = "root:gaurav@tcp(localhost:1000)/test"
 
 	CreateBook = "CREATE Table IF NOT EXISTS Book(bookID int NOT NULL AUTO_INCREMENT, title varchar(50), " +
 		"publication varchar(50),publicationDate varchar(50),authorID int, PRIMARY KEY (bookID),FOREIGN KEY " +
