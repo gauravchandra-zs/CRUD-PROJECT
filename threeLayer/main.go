@@ -2,7 +2,6 @@ package main
 
 import (
 	_ "net/http"
-	"os"
 
 	"developer.zopsmart.com/go/gofr/pkg/gofr"
 
@@ -17,55 +16,6 @@ import (
 )
 
 func main() {
-	//db, err := drivers.CreateTable()
-	//if err != nil {
-	//	log.Print(err)
-	//	return
-	//}
-	err := os.Setenv("DB_HOST", "localhost")
-	if err != nil {
-		return
-	}
-
-	err = os.Setenv("DB_USER", "root")
-	if err != nil {
-		return
-	}
-
-	err = os.Setenv("DB_PASSWORD", "gaurav")
-	if err != nil {
-		return
-	}
-
-	err = os.Setenv("DB_NAME", "test")
-	if err != nil {
-		return
-	}
-
-	err = os.Setenv("DB_PORT", "1000")
-	if err != nil {
-		return
-	}
-
-	err = os.Setenv("DB_DIALECT", "mysql")
-	if err != nil {
-		return
-	}
-
-	err = os.Setenv("APP_NAME", "CRUD")
-	if err != nil {
-		return
-	}
-
-	err = os.Setenv("APP_VERSION", "0.1")
-	if err != nil {
-		return
-	}
-
-	err = os.Setenv("HTTP_PORT", "8000")
-	if err != nil {
-		return
-	}
 
 	bookStore := datastorebook.New()
 	authorStore := datastoreauthor.New()
