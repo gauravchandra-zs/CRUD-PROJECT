@@ -1,9 +1,9 @@
 package models
 
 type Author struct {
-	ID        int    `json:",omitempty"`
-	FirstName string `json:",omitempty"`
-	LastName  string `json:",omitempty"`
-	Dob       string `json:",omitempty"`
-	PenName   string `json:",omitempty"`
+	ID        int    `json:"id,omitempty"`
+	FirstName string `json:"first_name,omitempty"`
+	LastName  string `json:"last_name,omitempty"`
+	Dob       string `json:"dob,omitempty"`
+	PenName   string `json:"pen_name,omitempty"`
 }

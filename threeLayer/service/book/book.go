@@ -1,6 +1,8 @@
 package servicebook
 
 import (
+	"net/http"
+
 	"developer.zopsmart.com/go/gofr/pkg/errors"
 	"developer.zopsmart.com/go/gofr/pkg/gofr"
 
@@ -74,7 +76,7 @@ func (s ServiceBook) GetBookByID(ctx *gofr.Context, id int) (models.Book, error)
 // PostBook validate book and author detail and call PostBook on store layer to post book
 func (s ServiceBook) PostBook(ctx *gofr.Context, book *models.Book) (int, error) {
 	if s.bookStore.CheckBook(ctx, book) || !s.authorStore.CheckAuthorByID(ctx, book.Author.ID) {
-		return 0, errors.EntityAlreadyExists{}
+		return 0, &errors.Response{StatusCode: http.StatusConflict, Reason: "entity already exists", Code: "Entity Already Exists"}
 	}
 
 	id, err := s.bookStore.PostBook(ctx, book)

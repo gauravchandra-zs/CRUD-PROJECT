@@ -39,11 +39,14 @@ func (h HandlerAuthor) PostAuthor(ctx *gofr.Context) (interface{}, error) {
 func (h HandlerAuthor) PutAuthor(ctx *gofr.Context) (interface{}, error) {
 	var author models.Author
 
-	id, err := strconv.Atoi(ctx.PathParam("id"))
+	i := ctx.PathParam("id")
+	if i == "" {
+		return nil, errors.MissingParam{Param: []string{"id"}}
+	}
 
+	id, err := strconv.Atoi(i)
 	if err != nil || id <= 0 {
-		params := []string{ctx.Param("id")}
-		return nil, errors.InvalidParam{Param: params}
+		return nil, errors.InvalidParam{Param: []string{"id"}}
 	}
 
 	err = ctx.Bind(&author)
@@ -60,11 +63,14 @@ func (h HandlerAuthor) PutAuthor(ctx *gofr.Context) (interface{}, error) {
 
 // DeleteAuthor extract id and validate id and call DeleteAuthor on service layer
 func (h HandlerAuthor) DeleteAuthor(ctx *gofr.Context) (interface{}, error) {
-	id, err := strconv.Atoi(ctx.PathParam("id"))
+	i := ctx.PathParam("id")
+	if i == "" {
+		return nil, errors.MissingParam{Param: []string{"id"}}
+	}
 
+	id, err := strconv.Atoi(i)
 	if err != nil || id <= 0 {
-		params := []string{ctx.Param("id")}
-		return nil, errors.InvalidParam{Param: params}
+		return nil, errors.InvalidParam{Param: []string{"id"}}
 	}
 
 	return h.serviceAuthor.DeleteAuthor(ctx, id)

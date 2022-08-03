@@ -33,11 +33,14 @@ func (h HandlerBook) GetAllBooks(ctx *gofr.Context) (interface{}, error) {
 
 // GetBookByID extract id and validate id  from request and call GetBookByID on service layer to get book detail
 func (h HandlerBook) GetBookByID(ctx *gofr.Context) (interface{}, error) {
-	id, err := strconv.Atoi(ctx.PathParam("id"))
+	i := ctx.PathParam("id")
+	if i == "" {
+		return nil, errors.MissingParam{Param: []string{"id"}}
+	}
 
+	id, err := strconv.Atoi(i)
 	if err != nil || id <= 0 {
-		params := []string{ctx.Param("id")}
-		return nil, errors.InvalidParam{Param: params}
+		return nil, errors.InvalidParam{Param: []string{"id"}}
 	}
 
 	var output models.Book
@@ -61,14 +64,24 @@ func (h HandlerBook) PostBook(ctx *gofr.Context) (interface{}, error) {
 		return nil, errors.ForbiddenRequest{}
 	}
 
-	return h.serviceBook.PostBook(ctx, &book)
+	id, err := h.serviceBook.PostBook(ctx, &book)
+	if err != nil {
+		return nil, err
+	}
+
+	return id, nil
 }
 
 // PutBook extract and validate book detail from request and call PUtBook on service layer to update book
 func (h HandlerBook) PutBook(ctx *gofr.Context) (interface{}, error) {
-	id, err := strconv.Atoi(ctx.PathParam("id"))
+	i := ctx.PathParam("id")
+	if i == "" {
+		return nil, errors.MissingParam{Param: []string{"id"}}
+	}
+
+	id, err := strconv.Atoi(i)
 	if err != nil || id <= 0 {
-		return nil, errors.InvalidParam{}
+		return nil, errors.InvalidParam{Param: []string{"id"}}
 	}
 
 	var book models.Book
@@ -121,18 +134,4 @@ func validateAuthor(author models.Author) bool {
 	}
 
 	return true
-}
-
-func SetStatusCode(data interface{}, err error) error {
-	switch err.(type) {
-	case errors.EntityAlreadyExists:
-		return errors.EntityAlreadyExists{}
-	case errors.InvalidParam:
-		return errors.InvalidParam{}
-	case errors.EntityNotFound:
-		return errors.EntityNotFound{}
-	default:
-		return nil
-	}
-
 }

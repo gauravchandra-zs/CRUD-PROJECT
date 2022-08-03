@@ -1,11 +1,11 @@
 package models
 
 type Book struct {
-	ID              int    `json:",omitempty"`
-	Title           string `json:",omitempty"`
-	Author          Author `json:",omitempty"`
-	Publication     string `json:",omitempty"`
-	PublicationDate string `json:",omitempty"`
+	ID              int    `json:"id"`
+	Title           string `json:"title"`
+	Author          Author `json:"author,omitempty"`
+	Publication     string `json:"publication"`
+	PublicationDate string `json:"publication_date"`
 }
 
 type contextKey string
